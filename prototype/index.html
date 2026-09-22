@@ -38,41 +38,28 @@
 <!-- SCREEN 1: HOME / MAP -->
 <!-- ============================================================ -->
 <div id="screen-home" class="screen active map-screen">
-    <!-- Map is rendered by the persistent layer behind this screen -->
-    <div class="map-placeholder"></div>
-
-    <!-- GPS Info Card (top) -->
-    <div class="home-info-card">
-        <div class="gps-coords">
-            <span class="coord-label">LAT</span>
-            <span id="gps-lat" class="coord-val">--</span>
-            <span class="coord-label">LNG</span>
-            <span id="gps-lng" class="coord-val">--</span>
-            <span class="coord-label">ACC</span>
-            <span id="gps-acc" class="coord-val">--</span>
-        </div>
-        <div id="gps-status-text" class="gps-status-text">Acquiring GPS...</div>
+    <!-- Floating Top Search Bar -->
+    <div class="floating-search-bar">
+        <div class="search-profile-icon">M</div>
+        <input id="dest-input" class="search-input" type="text" placeholder="Search here" />
+        <div class="search-mic-icon">🎙️</div>
     </div>
 
-    <!-- Search Panel (bottom) -->
-    <div class="home-search-panel">
-        <div class="search-title">NAVISENSE-IDR</div>
-        <div class="search-subtitle">NavIC Intelligent Dead Reckoning</div>
+    <!-- Home Bottom Sheet (Demo Corridors) -->
+    <div class="home-bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">Demo Corridors</div>
+        <div class="sheet-subtitle">Select a pre-configured route with GNSS Outage sectors</div>
+        <div id="preset-buttons" class="preset-list"></div>
+    </div>
 
-        <div class="search-row">
-            <div class="search-icon">A</div>
-            <input id="origin-input" class="search-input" type="text"
-                placeholder="Your location (auto-detected)" readonly />
-        </div>
-        <div class="search-row">
-            <div class="search-icon dest">B</div>
-            <input id="dest-input" class="search-input" type="text"
-                placeholder="Search destination or tap map..." />
-        </div>
-
-        <!-- Preset Corridors -->
-        <div class="preset-label">📍 Demo Corridors</div>
-        <div id="preset-buttons" class="preset-grid"></div>
+    <!-- Main Bottom Navigation (App-level) -->
+    <div class="app-bottom-nav">
+        <div class="nav-item active"><span class="icon">📍</span><span class="label">Explore</span></div>
+        <div class="nav-item"><span class="icon">🚗</span><span class="label">Go</span></div>
+        <div class="nav-item"><span class="icon">🔖</span><span class="label">Saved</span></div>
+        <div class="nav-item"><span class="icon">➕</span><span class="label">Contribute</span></div>
+        <div class="nav-item"><span class="icon">🔔</span><span class="label">Updates</span></div>
     </div>
 </div>
 
@@ -80,28 +67,37 @@
 <!-- SCREEN 2: ROUTE SELECTION -->
 <!-- ============================================================ -->
 <div id="screen-route" class="screen map-screen">
-    <!-- Map remains visible as background -->
-    <div class="route-overlay">
-        <div class="screen-header">
-            <button id="btn-route-back" class="back-btn">←</button>
-            <span class="screen-title">Choose Route</span>
+    <!-- Floating Top Search Bar (Route Mode) -->
+    <div class="floating-search-bar" style="border-radius: 16px; flex-direction: column; align-items: stretch; padding: 16px;">
+        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+            <button id="btn-route-back" style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer;">←</button>
+            <div style="flex:1;">
+                <input class="search-input" type="text" value="Your Location" readonly style="width:100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;" />
+            </div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <div style="width: 20px;"></div>
+            <div style="flex:1;">
+                <input id="route-dest-display" class="search-input" type="text" value="Destination" readonly style="width:100%;" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Route Bottom Sheet -->
+    <div class="home-bottom-sheet" style="bottom: 0;">
+        <div class="sheet-handle"></div>
+        
+        <div id="route-status" class="route-status" style="color: var(--text2); font-size: 12px; margin-bottom: 12px;">Calculating routes...</div>
+        
+        <div class="route-selected-info-row" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+            <span id="selected-route-info" class="selected-route-info" style="font-size: 24px; font-weight: 800; color: #34C759;">-- min (--- km)</span>
+            <div class="outage-zone-note" id="outage-zone-legend" style="font-size: 10px; color: var(--text3); max-width: 120px; text-align: right;">
+                <span class="outage-icon" style="color: #FF9F0A;">⚠️</span> Contains GNSS Blackout
+            </div>
         </div>
 
-        <div id="route-status" class="route-status">Calculating routes...</div>
-
-        <div id="route-list" class="route-list"></div>
-
-        <div class="route-selected-info-row">
-            <span id="selected-route-info" class="selected-route-info"></span>
-        </div>
-
-        <div class="outage-zone-note" id="outage-zone-legend">
-            <span class="outage-icon">⚠️</span>
-            Dashed zones = GNSS Blackout Sectors (Tunnels, Forests)
-        </div>
-
-        <button id="btn-start-nav" class="btn-primary btn-large">
-            ▶ Start Navigation
+        <button id="btn-start-nav" class="btn-primary btn-large" style="width: 100%; padding: 16px; border-radius: 20px; font-size: 18px; font-weight: 800; background: #0A84FF; color: white; border: none; cursor: pointer;">
+            Start Navigation
         </button>
     </div>
 </div>

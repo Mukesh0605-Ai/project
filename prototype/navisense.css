@@ -205,27 +205,108 @@ html, body {
 .dest-marker { background: var(--red); transform: rotate(0deg); font-size: 20px; width: auto; border-radius: 0; background: none; }
 
 /* ============================================================ */
-/* SCREEN 1: HOME */
+/* SCREEN 1: HOME MAP (Floating elements) */
 /* ============================================================ */
-.home-info-card {
+.floating-search-bar {
     position: absolute;
-    top: 50px; left: 12px; right: 12px;
-    background: rgba(15,17,23,0.92);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 16px;
-    z-index: 100;
-}
-
-.gps-coords {
+    top: 56px;
+    left: 16px;
+    right: 16px;
+    background: rgba(22, 27, 34, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 30px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    padding: 8px 16px;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
-.coord-label { font-size: 9px; color: var(--text3); font-weight: 700; letter-spacing: 1px; }
-.coord-val { font-family: var(--mono); font-size: 11px; color: var(--green-light); font-weight: 500; }
+.search-profile-icon {
+    width: 32px; height: 32px;
+    border-radius: 16px;
+    background: #0A84FF;
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px;
+}
+.floating-search-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 16px;
+    padding: 0 12px;
+    outline: none;
+}
+.search-mic-icon {
+    font-size: 20px;
+}
+
+.home-bottom-sheet {
+    position: absolute;
+    bottom: 80px; /* Above bottom nav */
+    left: 0; right: 0;
+    background: rgba(11, 14, 20, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-radius: 32px 32px 0 0;
+    padding: 16px 20px 20px 20px;
+    z-index: 90;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    display: flex; flex-direction: column;
+}
+.sheet-handle {
+    width: 40px; height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 2px;
+    align-self: center;
+    margin-bottom: 16px;
+}
+.sheet-title {
+    font-size: 18px; font-weight: 800; color: white;
+}
+.sheet-subtitle {
+    font-size: 12px; color: var(--text2); margin-bottom: 16px;
+}
+.preset-list {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 250px; overflow-y: auto;
+}
+.preset-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 16px;
+    color: white;
+    text-align: left;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.preset-btn:active { background: rgba(255,255,255,0.1); }
+
+/* App Bottom Nav */
+.app-bottom-nav {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background: #0B0E14;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex; justify-content: space-around; align-items: center;
+    z-index: 100;
+}
+.app-bottom-nav .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: var(--text2);
+}
+.app-bottom-nav .nav-item.active {
+    color: #34C759;
+}
+.app-bottom-nav .nav-item .icon { font-size: 20px; }
+.app-bottom-nav .nav-item .label { font-size: 10px; font-weight: 600; }
 
 .gps-status-text {
     margin-top: 6px;
