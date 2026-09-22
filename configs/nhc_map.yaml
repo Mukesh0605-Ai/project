@@ -1,0 +1,20 @@
+# NHC, Map Matching, and Confidence Configuration
+# Note: Placeholders only. No assumptions fabricated.
+
+nhc:
+  enabled: true
+  lateral_velocity_variance: 0.0 # PENDING
+  vertical_velocity_variance: 0.0 # PENDING
+
+map_matching:
+  enabled: true
+  map_source_path: "data/map.osm" # PENDING UPLOAD
+  search_radius: 0.0
+  distance_weight: 0.0
+  heading_weight: 0.0
+
+confidence:
+  thresholds:
+    healthy_gnss: 0.0
+    degraded_gnss: 0.0
+    low_confidence_overall: 0.0

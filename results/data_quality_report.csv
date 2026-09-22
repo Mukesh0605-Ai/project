@@ -1,0 +1,2 @@
+drive_id,duration,sample_count,sampling_frequency,missing_samples,duplicate_timestamps,gnss_avail,imu_avail,gt_avail,timestamp_gaps,anomalies
+UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,DATASET_MISSING

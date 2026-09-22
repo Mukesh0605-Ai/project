@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F172A"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SIH 26168 — Developer Debug Screen"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#F59E0B"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 1. Raw IMU Telemetry -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1. RAW IMU SENSOR STREAM (100 Hz)"
+            android:textColor="#38BDF8"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tvRawImu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ACCEL: [0.00, 0.00, 9.81] m/s²\nGYRO:  [0.000, 0.000, 0.000] rad/s\nMAG:   [0.0, 0.0, 0.0] uT"
+            android:textColor="#E2E8F0"
+            android:fontFamily="monospace"
+            android:textSize="12sp"
+            android:background="#1E293B"
+            android:padding="10dp"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 2. AI Velocity vs EKF Velocity -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2. AI MODEL VELOCITY VS EKF ESTIMATE"
+            android:textColor="#38BDF8"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tvVelocityComparison"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="AI Model Velocity:  0.00 m/s (Uncertainty: ±0.10 m/s)\nEKF Estimated Speed: 0.00 m/s (0.0 km/h)"
+            android:textColor="#E2E8F0"
+            android:fontFamily="monospace"
+            android:textSize="12sp"
+            android:background="#1E293B"
+            android:padding="10dp"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 3. GNSS vs DR vs Ground Truth -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3. TRAJECTORY: GNSS VS DR VS GROUND TRUTH"
+            android:textColor="#38BDF8"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tvTrajectoryComparison"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="GNSS Fix (ENU):  [0.0, 0.0, 0.0]\nDR State (ENU):  [0.0, 0.0, 0.0]\nGround Truth:    [0.0, 0.0, 0.0]"
+            android:textColor="#E2E8F0"
+            android:fontFamily="monospace"
+            android:textSize="12sp"
+            android:background="#1E293B"
+            android:padding="10dp"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 4. Covariance Matrix Visualization -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4. 15x15 EKF STATE COVARIANCE VISUALIZATION"
+            android:textColor="#38BDF8"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tvCovarianceMatrix"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Position Error Variance  Tr(P_pos): 0.040 m² (1-sigma: 0.20 m)\nVelocity Error Variance  Tr(P_vel): 0.010 (m/s)² (1-sigma: 0.10 m/s)\nYaw Orientation Variance P_yaw:     0.0050 rad² (1-sigma: 4.05 deg)"
+            android:textColor="#E2E8F0"
+            android:fontFamily="monospace"
+            android:textSize="12sp"
+            android:background="#1E293B"
+            android:padding="10dp"
+            android:layout_marginBottom="16dp"/>
+
+    </LinearLayout>
+</ScrollView>

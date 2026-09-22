@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Google Maps Real-Time Navigation • NavIC Intelligent Dead Reckoning</title>
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700;900&family=Roboto:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Leaflet Engine for Direct High-Performance Google Maps Tile Stream -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="gmaps-body">
+
+    <!-- Responsive Cockpit Device Shell (Optimized exclusively for Android Mobile Device) -->
+    <div class="gmaps-device-frame" id="device-frame">
+        <!-- Android Phone Hardware Features -->
+        <div class="android-speaker-slot"></div>
+        <div class="android-front-camera"></div>
+
+        <div class="gmaps-screen">
+
+            <!-- 1. Authentic Android System Status Bar -->
+            <div class="gmaps-status-bar">
+                <div class="status-left">
+                    <span class="status-time" id="status-clock">09:41</span>
+                    <span class="android-stat-icon" title="Google Maps Running">🗺️</span>
+                    <span class="status-navic-badge" id="nav-system-badge">🛰️ NavIC L5</span>
+                </div>
+                <div class="status-center-sat" id="btn-toggle-constellation"
+                    title="View Satellite Constellation Monitor">
+                    <span class="sat-icon">📡</span>
+                    <span class="sat-count" id="sat-count-val">14 SVs</span>
+                    <span class="dop-tag" id="dop-tag">HDOP 0.8</span>
+                </div>
+                <div class="status-right-icons">
+                    <!-- Manual GPS Hardware Quick Toggle (User Self Cutoff) -->
+                    <button class="android-gps-quick-btn active" id="btn-quick-gps-toggle"
+                        title="Android Location Hardware: Tap to manually turn OFF/ON GPS">
+                        <span class="gps-dot"></span>
+                        <span class="gps-quick-lbl" id="gps-quick-lbl">GPS: ON</span>
+                    </button>
+                    <span class="network-badge">5G</span>
+                    <button class="icon-btn-voice" id="btn-voice-toggle" title="Toggle Voice Guidance">
+                        <span id="voice-icon">🔊</span>
+                    </button>
+                    <div class="battery-group" title="Battery 88% • Fast Charging">
+                        <span class="battery-pct">88%</span>
+                        <div class="battery-icon">
+                            <div class="battery-level"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Android Quick Settings Notification Shade / Location Bar -->
+            <div class="android-quicksettings-bar" id="android-quicksettings-bar">
+                <div class="qs-tile-group">
+                    <div class="qs-tile active" id="qs-gps-tile" title="Click to manually toggle GPS hardware OFF/ON">
+                        <div class="qs-icon">📍</div>
+                        <div class="qs-texts">
+                            <span class="qs-title">Location (GPS)</span>
+                            <span class="qs-status" id="qs-gps-status">Enabled (NavIC L5)</span>
+                        </div>
+                        <div class="qs-switch">
+                            <div class="qs-switch-thumb"></div>
+                        </div>
+                    </div>
+                    <div class="qs-tile qs-mini-tile" id="qs-sensor-tile" title="Android 6-DoF IMU Sensors">
+                        <div class="qs-icon">📱</div>
+                        <div class="qs-texts">
+                            <span class="qs-title">IMU Sensors</span>
+                            <span class="qs-status" id="qs-imu-status">100Hz Active</span>
+                        </div>
+                    </div>
+                    <div class="qs-tile qs-mini-tile" id="qs-dr-tile" title="Dead Reckoning Engine State">
+                        <div class="qs-icon">🧠</div>
+                        <div class="qs-texts">
+                            <span class="qs-title">DR System</span>
+                            <span class="qs-status" id="qs-dr-status">Standby (Auto)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. ROUTE PLANNER CARD (Visible before navigation starts - Authentic Google Maps Flow) -->
+            <div class="gmaps-route-card" id="route-planner-card">
+                <div class="route-card-header">
+                    <div class="route-dots-column">
+                        <div class="route-dot origin-dot"></div>
+                        <div class="route-line-connector"></div>
+                        <div class="route-dot dest-dot"></div>
+                    </div>
+                    <div class="route-inputs-column">
+                        <!-- Origin Input -->
+                        <div class="route-input-row">
+                            <span class="input-icon">📍</span>
+                            <input type="text" id="origin-input" value="Your Current Location" readonly
+                                title="Origin: Automatically locked to your GPS location">
+                            <button class="btn-detect-gps" id="btn-refresh-gps"
+                                title="Re-detect Current GPS Location">🎯</button>
+                        </div>
+                        <div class="route-input-divider"></div>
+                        <!-- Destination Input -->
+                        <div class="route-input-row">
+                            <span class="input-icon">🔴</span>
+                            <input type="text" id="destination-input"
+                                placeholder="Choose destination worldwide (or tap on map)..." autocomplete="off">
+                            <button class="btn-clear-dest" id="btn-clear-dest" style="display:none;"
+                                title="Clear">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Destination Suggestions & Indian Demonstration Corridors -->
+                <div class="quick-dest-pills">
+                    <span class="quick-dest-lbl">SUGGESTIONS:</span>
+                    <button class="dest-pill" data-dest="airport">✈️ Nearby Airport</button>
+                    <button class="dest-pill" data-dest="central">🚉 Central Railway</button>
+                    <button class="dest-pill" data-dest="techpark">🏢 IT Tech Park</button>
+                    <button class="dest-pill" data-preset="delhi">🇮🇳 Delhi Pragati Tunnel</button>
+                    <button class="dest-pill" data-preset="mumbai">🇮🇳 Mumbai Coastal Tunnel</button>
+                    <button class="dest-pill" data-preset="atal">🇮🇳 Atal Mountain Tunnel</button>
+                </div>
+
+                <!-- Route Summary & Start Action -->
+                <div class="route-action-row" id="route-action-row">
+                    <div class="route-est-summary" id="route-est-summary">
+                        <span class="est-mins" id="plan-est-mins">-- min</span>
+                        <span class="est-dist" id="plan-est-dist">(-- km)</span>
+                        <span class="est-note" id="plan-est-note">• Tap map or enter destination</span>
+                    </div>
+                    <button class="btn-start-nav" id="btn-start-navigation">
+                        <span>▶ Start Navigation</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. ACTIVE TURN-BY-TURN NAVIGATION BANNER (Visible during navigation) -->
+            <div class="gmaps-nav-header" id="nav-header" style="display: none;">
+                <div class="maneuver-icon-box" id="maneuver-icon-box">
+                    <svg viewBox="0 0 24 24" class="maneuver-arrow-svg" id="maneuver-svg">
+                        <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+                    </svg>
+                </div>
+                <div class="maneuver-text-group">
+                    <div class="maneuver-dist-row">
+                        <span class="maneuver-dist" id="maneuver-dist">In 350 m</span>
+                        <span class="maneuver-next-hint" id="maneuver-next-hint">Then keep left</span>
+                    </div>
+                    <div class="maneuver-road" id="maneuver-road">Turn right onto Ring Road / NH 44</div>
+                    <!-- Overhead Highway Gantry Lane Guidance -->
+                    <div class="lane-guidance-gantry" id="lane-guidance">
+                        <div class="gantry-lane"><span class="gantry-arrow">↑</span></div>
+                        <div class="gantry-lane active"><span class="gantry-arrow">↑</span></div>
+                        <div class="gantry-lane active"><span class="gantry-arrow">↗</span></div>
+                        <div class="gantry-lane"><span class="gantry-arrow">→</span></div>
+                        <span class="gantry-text">Use right 2 lanes</span>
+                    </div>
+                </div>
+                <button class="header-action-btn" id="btn-toggle-steps" title="View all route directions">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#FFFFFF">
+                        <path
+                            d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- =====================================================================
+                 4. TUNNEL WARNING SYSTEM & GNSS OUTAGE ALERTS (Tamil SIH Requirement)
+                 ===================================================================== -->
+
+            <!-- 4A. EARLY APPROACH WARNING BANNER (When approaching tunnel entrance) -->
+            <div class="tunnel-warning-banner" id="tunnel-warning-banner" style="display: none;">
+                <div class="warning-badge-pulse">
+                    <span class="warning-icon-animate">⚠️</span>
+                </div>
+                <div class="warning-text-container">
+                    <div class="warning-headline">
+                        <span class="warning-label-txt">TUNNEL AHEAD IN</span>
+                        <span class="warning-countdown-badge" id="tunnel-countdown-dist">180 m</span>
+                    </div>
+                    <div class="warning-subline">GNSS Blackout Zone Approaching • AI Dead Reckoning Standing By</div>
+                </div>
+                <div class="warning-progress-track">
+                    <div class="warning-progress-fill" id="tunnel-approach-fill"></div>
+                </div>
+            </div>
+
+            <!-- 4B. ACTIVE GNSS BLACKOUT ALERT (Tunnel Sector or Manual GPS Cutoff) -->
+            <div class="tunnel-blackout-banner" id="tunnel-blackout-banner" style="display: none;">
+                <div class="blackout-icon-box" id="blackout-icon-box">
+                    <span class="blackout-flashing-icon">🚨</span>
+                </div>
+                <div class="blackout-details">
+                    <div class="blackout-headline-row">
+                        <span class="blackout-reason-tag" id="blackout-reason-tag">TUNNEL BLACKOUT</span>
+                        <span class="blackout-timer-pill" id="blackout-stopwatch">0.0s</span>
+                    </div>
+                    <div class="blackout-system-msg" id="blackout-system-msg">
+                        GPS Signal Lost • AI Dead Reckoning Active (1D-CNN+GRU + EKF + NHC)
+                    </div>
+                </div>
+                <div class="blackout-trigger-pill" id="blackout-trigger-badge">AUTO DETECTED</div>
+            </div>
+
+            <!-- 4C. TUNNEL EXITED / GNSS RESTORED CELEBRATION BANNER -->
+            <div class="tunnel-restored-banner" id="tunnel-restored-banner" style="display: none;">
+                <div class="restored-check-icon">✅</div>
+                <div class="restored-text-box">
+                    <div class="restored-title">GNSS SIGNAL RESTORED (14 SVs)</div>
+                    <div class="restored-metrics" id="restored-metrics-msg">Realigned with NavIC L5 constellation • 3σ Drift 0.84m</div>
+                </div>
+            </div>
+
+            <!-- Legacy outage pill kept for backwards compatibility -->
+            <div class="gmaps-outage-pill" id="outage-pill" style="display: none;">
+                <div class="outage-pulse-dot"></div>
+                <div class="outage-content">
+                    <span class="outage-title">GPS signal lost (Tunnel / Forest)</span>
+                    <span class="outage-sub">• AI Dead Reckoning Active (1D-CNN+GRU + IMU Sensors + EKF + NHC)</span>
+                </div>
+                <span class="outage-timer-badge" id="blackout-timer">0.0s</span>
+            </div>
+
+            <!-- 5. Real-Time Google Maps Canvas -->
+            <div id="map" class="gmaps-map-canvas"></div>
+
+            <!-- 6. Floating Action Buttons (Right-Hand FAB Stack) -->
+            <div class="gmaps-fab-group">
+                <!-- Compass / Reorient North -->
+                <button class="gmaps-fab" id="btn-compass" title="Reorient North">
+                    <div class="compass-needle" id="compass-needle">
+                        <div class="needle-north"></div>
+                        <div class="needle-south"></div>
+                    </div>
+                </button>
+                <!-- Layers Toggle (Roadmap / Live Traffic / Satellite / Terrain) -->
+                <button class="gmaps-fab" id="btn-layers" title="Cycle Layers (Roadmap / Traffic / Satellite)">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#5F6368">
+                        <path
+                            d="M11.99 18.54l-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9.07l-9-7-9 7 1.63 1.27L12 16z" />
+                    </svg>
+                </button>
+                <!-- Constellation Skyplot Modal Button -->
+                <button class="gmaps-fab" id="btn-fab-constellation" title="Open NavIC & GPS Constellation Monitor">
+                    <span style="font-size: 16px;">🛰️</span>
+                </button>
+                <!-- Re-center on Current Location / Vehicle -->
+                <button class="gmaps-fab fab-my-location active" id="btn-recenter" title="Center on My Location">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#1A73E8">
+                        <path
+                            d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
+                    </svg>
+                </button>
+                <!-- PRIMARY OUTAGE SIMULATION TOGGLE (Tunnel / Forest / Jamming) -->
+                <button class="gmaps-fab fab-outage-toggle" id="btn-toggle-outage"
+                    title="Simulate GNSS Outage (Tunnel Blackout / Forest Canopy / Jamming)">
+                    <span class="fab-outage-icon">⚡</span>
+                    <span class="fab-outage-lbl">OUTAGE</span>
+                </button>
+            </div>
+
+            <!-- 7. Simulation Rate Controls (Floating Top-Right below status bar) -->
+            <div class="sim-speed-controls" id="sim-speed-controls" style="display: none;">
+                <span class="sim-lbl">SIM RATE:</span>
+                <button class="sim-speed-btn active" data-speed="1">1x</button>
+                <button class="sim-speed-btn" data-speed="2">2x</button>
+                <button class="sim-speed-btn" data-speed="4">4x</button>
+                <button class="view-mode-btn active" id="btn-heading-mode" title="Toggle 3D Head-Up vs 2D North-Up">🧭
+                    3D</button>
+            </div>
+
+            <!-- 8. Google Maps Speedometer (Bottom-Left) -->
+            <div class="gmaps-speedometer" id="speedometer" style="display: none;">
+                <div class="speed-val-box">
+                    <span class="speed-val" id="speed-val">52</span>
+                    <span class="speed-unit">km/h</span>
+                </div>
+                <div class="speed-limit-badge" title="Road Speed Limit">
+                    <span id="speed-limit-val">60</span>
+                </div>
+            </div>
+
+            <!-- 9. Dead Reckoning Telemetry Micro HUD (Live Mathematical Metrics) -->
+            <div class="dr-telemetry-hud" id="dr-hud" style="display: none;">
+                <div class="hud-item">
+                    <span class="hud-label">SENSORS (IMU/MAG)</span>
+                    <span class="hud-value" id="hud-accel">Ax: +0.02 | Gyro: +0.00°/s</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">AI FORWARD VEL</span>
+                    <span class="hud-value" id="hud-ai-speed">52.4 km/h (GRU)</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label">DR DRIFT (3σ)</span>
+                    <span class="hud-value" id="hud-drift">0.00 m</span>
+                </div>
+                <div class="hud-tag" id="hud-status-tag">EKF OPTIMAL</div>
+            </div>
+
+            <!-- 10. Authentic Google Maps Bottom Navigation Sheet -->
+            <div class="gmaps-bottom-sheet" id="bottom-sheet" style="display: none;">
+                <div class="sheet-drag-handle" id="sheet-handle"></div>
+                <div class="sheet-main-content">
+                    <div class="eta-cluster">
+                        <div class="eta-minutes-large" id="eta-mins">14 <small>min</small></div>
+                        <div class="eta-sub-metrics">
+                            <span class="metric-dist" id="remaining-dist">6.8 km</span>
+                            <span class="metric-dot">•</span>
+                            <span class="metric-time" id="arrival-time">4:45 PM</span>
+                            <span class="metric-dot">•</span>
+                            <span class="metric-traffic" id="traffic-text">Faster route</span>
+                        </div>
+                    </div>
+                    <div class="sheet-actions">
+                        <button class="sheet-btn-reloop" id="btn-reloop" title="Restart Route Navigation">🔄</button>
+                        <button class="sheet-btn-pause" id="btn-toggle-play"
+                            title="Pause / Resume Navigation">⏸</button>
+                        <!-- Red Circular Exit Navigation Button -->
+                        <button class="gmaps-exit-btn" id="btn-end-route" title="End Navigation & Return to Search">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="#FFFFFF">
+                                <path
+                                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Multi-Sensor Pipeline Verification Row -->
+                <div class="tech-pipeline-row">
+                    <span class="t-pill active" id="pill-gnss">🛰️ NavIC L5/L1</span>
+                    <span class="t-pill" id="pill-imu">📡 6-DoF IMU</span>
+                    <span class="t-pill" id="pill-ai">🧠 1D-CNN+GRU</span>
+                    <span class="t-pill" id="pill-nhc">🎯 NHC Bound</span>
+                    <span class="t-pill" id="pill-ekf">⚡ ES-EKF Filter</span>
+                </div>
+            </div>
+
+            <!-- 11. NavIC Constellation Skyplot & Satellite Signal Monitor Modal -->
+            <div class="constellation-modal" id="constellation-modal" style="display: none;">
+                <div class="c-modal-header">
+                    <div class="c-title-group">
+                        <span class="c-badge-flag">🇮🇳 ISRO NavIC</span>
+                        <h4>NavIC + GPS Dual-Band Satellite Monitor</h4>
+                    </div>
+                    <button class="c-close-btn" id="btn-close-constellation">✕</button>
+                </div>
+                <div class="c-modal-body">
+                    <div class="constellation-stats-grid">
+                        <div class="c-stat-box">
+                            <span class="c-stat-lbl">CONSTELLATION LOCK</span>
+                            <span class="c-stat-val text-green" id="c-status-val">FIXED (3D DGPS)</span>
+                        </div>
+                        <div class="c-stat-box">
+                            <span class="c-stat-lbl">CARRIER SIGNAL (C/N₀)</span>
+                            <span class="c-stat-val text-blue" id="c-cn0-val">44.2 dB-Hz</span>
+                        </div>
+                        <div class="c-stat-box">
+                            <span class="c-stat-lbl">ESTIMATED CEP ERROR</span>
+                            <span class="c-stat-val text-amber" id="c-cep-val">±2.4 m</span>
+                        </div>
+                        <div class="c-stat-box">
+                            <span class="c-stat-lbl">EKF STATE VECTOR</span>
+                            <span class="c-stat-val text-purple">15-DoF ES-EKF</span>
+                        </div>
+                    </div>
+
+                    <div class="sat-bars-container">
+                        <div class="sat-bars-title">REAL-TIME SATELLITE SNR (dB-Hz) • L5 / S-BAND DUAL FREQUENCY</div>
+                        <div class="sat-bars-list" id="sat-bars-list"></div>
+                    </div>
+
+                    <div class="c-info-footer">
+                        <span>ℹ️ In tunnels or dense forests, satellite signals drop to 0 dB-Hz. The vehicle position
+                            continues uninterrupted via the 1D-CNN+GRU velocity model and ES-EKF kinematic integration
+                            bound by Non-Holonomic Constraints.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 12. Google Maps Turn-By-Turn Steps Drawer -->
+            <div class="gmaps-steps-drawer" id="steps-drawer" style="display: none;">
+                <div class="steps-drawer-header">
+                    <h3>Route Guidance Directions</h3>
+                    <button class="steps-close-btn" id="btn-close-steps">✕</button>
+                </div>
+                <div class="steps-scroll-list" id="steps-list"></div>
+            </div>
+
+            <!-- 13. Fullscreen Toggle Button -->
+            <button class="fullscreen-switch-btn" id="btn-toggle-frame" title="Toggle Fullscreen Desktop View">
+                ⛶
+            </button>
+
+            <!-- 14. Floating Toast Notification -->
+            <div class="gmaps-toast" id="app-toast" style="display: none;"></div>
+
+            <!-- 15. Authentic Android 3-Button Navigation Bar (Android Mobile Device Experience) -->
+            <div class="android-navigation-bar" id="android-nav-bar">
+                <button class="android-nav-key" id="android-key-back" title="Android Back Button">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="#A0AAB8">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                </button>
+                <button class="android-nav-key" id="android-key-home" title="Android Home Button (Center Map)">
+                    <div class="android-home-circle"></div>
+                </button>
+                <button class="android-nav-key" id="android-key-recents" title="Android Recents (Open Constellation Monitor)">
+                    <div class="android-recents-square"></div>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

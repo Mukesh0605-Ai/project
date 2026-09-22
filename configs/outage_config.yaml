@@ -1,0 +1,9 @@
+# GNSS Outage Simulation Config
+outage_scenarios:
+  - name: 'tunnel_blackout_30s'
+    start_time: 15.0
+    duration: 30.0
+  - name: 'forest_canopy_45s'
+    start_time: 20.0
+    duration: 45.0
+

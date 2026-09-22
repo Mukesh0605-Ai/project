@@ -1,0 +1,21 @@
+# EKF Configuration
+# NOTE: All values are placeholders. No assumptions have been fabricated.
+
+initialization:
+  method: "UNKNOWN" 
+  duration_sec: 0.0
+
+noise_parameters:
+  imu_acc_noise: 0.0 # PENDING DATASET SPECS
+  imu_gyro_noise: 0.0 # PENDING DATASET SPECS
+  gnss_noise_base: 0.0 # PENDING DATASET SPECS
+
+gating:
+  gnss_innovation_threshold: 0.0
+
+outage:
+  default_blackout_start: 0.0
+  default_blackout_duration: 0.0
+
+paths:
+  output_dir: "outputs/evaluation/"

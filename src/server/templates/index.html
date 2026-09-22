@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SIH 168 - Intelligent Dead Reckoning Live Demo</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA0qQ6TdQWauBetlx0CPPG27r15eGhN1us&libraries=geometry,places"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #090d16; color: #fff; }
+        #header { padding: 14px 28px; background: #0f172a; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1e293b; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        h1 { margin: 0; font-size: 18px; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
+        #map { height: calc(100vh - 65px); width: 100%; }
+        #status-bar { padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 13px; background: #1e293b; letter-spacing: 0.5px; }
+        .status-gnss { color: #10b981; border: 1px solid #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+        .status-outage { color: #ef4444; border: 1px solid #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.6; } }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1><span>📡</span> Intelligent Dead Reckoning (Google Maps + AI/EKF Edge Engine)</h1>
+        <div id="status-bar" class="status-gnss">Waiting for data feed...</div>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const GOOGLE_MAPS_DARK_STYLE = [
+            { elementType: "geometry", stylers: [{ color: "#1d2c4d" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#8ec3b9" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#1a3646" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#304a7d" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#0e1626" }] }
+        ];
+
+        let gMap = null;
+        let gMarker = null;
+        let gPathGNSS = null;
+        let gPathOutage = null;
+
+        let lMap = null;
+        let lMarker = null;
+        let lPathGNSS = null;
+        let lPathOutage = null;
+
+        let useGoogle = false;
+        let firstFix = true;
+        let lastIsOutage = false;
+
+        function initMap() {
+            if (window.google && window.google.maps) {
+                try {
+                    useGoogle = true;
+                    gMap = new google.maps.Map(document.getElementById('map'), {
+                        center: { lat: 10.7, lng: 106.6 },
+                        zoom: 16,
+                        styles: GOOGLE_MAPS_DARK_STYLE,
+                        disableDefaultUI: false
+                    });
+
+                    gMarker = new google.maps.Marker({
+                        position: { lat: 10.7, lng: 106.6 },
+                        map: gMap,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: "#38bdf8",
+                            fillOpacity: 1.0,
+                            strokeWeight: 2,
+                            strokeColor: "#ffffff"
+                        }
+                    });
+
+                    gPathGNSS = new google.maps.Polyline({
+                        path: [],
+                        geodesic: true,
+                        strokeColor: '#10b981',
+                        strokeOpacity: 0.9,
+                        strokeWeight: 4,
+                        map: gMap
+                    });
+
+                    gPathOutage = new google.maps.Polyline({
+                        path: [],
+                        geodesic: true,
+                        strokeColor: '#ef4444',
+                        strokeOpacity: 0.9,
+                        strokeWeight: 4,
+                        map: gMap
+                    });
+                    return;
+                } catch(e) {
+                    console.warn("Google Maps init fallback to Leaflet:", e);
+                }
+            }
+
+            // Leaflet Fallback
+            lMap = L.map('map').setView([10.7, 106.6], 15);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CARTO'
+            }).addTo(lMap);
+
+            lPathGNSS = L.polyline([], {color: '#10b981', weight: 4}).addTo(lMap);
+            lPathOutage = L.polyline([], {color: '#ef4444', weight: 4, dashArray: '5,5'}).addTo(lMap);
+            lMarker = L.circleMarker([0,0], {radius: 6, color: '#fff', fillColor: '#38bdf8', fillOpacity: 1}).addTo(lMap);
+        }
+
+        async function fetchState() {
+            try {
+                const response = await fetch('/state');
+                const data = await response.json();
+                
+                if (data.status === 'active') {
+                    const latlng = [data.lat, data.lon];
+                    const statusBar = document.getElementById('status-bar');
+
+                    if (useGoogle && gMap) {
+                        const pos = new google.maps.LatLng(data.lat, data.lon);
+                        if (firstFix) {
+                            gMap.setCenter(pos);
+                            gMap.setZoom(18);
+                            firstFix = false;
+                        }
+                        gMarker.setPosition(pos);
+                        gMap.panTo(pos);
+
+                        if (data.is_outage) {
+                            statusBar.className = 'status-outage';
+                            statusBar.innerText = '⚠️ GNSS OUTAGE - AI DEAD RECKONING ACTIVE';
+                            gPathOutage.getPath().push(pos);
+                        } else {
+                            statusBar.className = 'status-gnss';
+                            statusBar.innerText = '✅ GNSS ACTIVE';
+                            gPathGNSS.getPath().push(pos);
+                        }
+                    } else if (lMap) {
+                        if (firstFix) {
+                            lMap.setView(latlng, 18);
+                            firstFix = false;
+                        }
+                        lMarker.setLatLng(latlng);
+                        lMap.panTo(latlng, {animate: true});
+
+                        if (data.is_outage) {
+                            statusBar.className = 'status-outage';
+                            statusBar.innerText = '⚠️ GNSS OUTAGE - AI DEAD RECKONING ACTIVE';
+                            lPathOutage.addLatLng(latlng);
+                        } else {
+                            statusBar.className = 'status-gnss';
+                            statusBar.innerText = '✅ GNSS ACTIVE';
+                            lPathGNSS.addLatLng(latlng);
+                        }
+                    }
+                    
+                    lastIsOutage = data.is_outage;
+                }
+            } catch (err) {
+                // Server waiting
+            }
+        }
+
+        window.addEventListener('load', () => {
+            initMap();
+            setInterval(fetchState, 120);
+        });
+    </script>
+</body>
+</html>

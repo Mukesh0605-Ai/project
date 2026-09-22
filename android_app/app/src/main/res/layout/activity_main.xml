@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F172A">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Title Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SIH 26168 — 10 Hz Navigation Cockpit"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#38BDF8"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Offline OSM Map View -->
+        <org.osmdroid.views.MapView
+            android:id="@+id/mapView"
+            android:layout_width="match_parent"
+            android:layout_height="240dp"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Primary Telemetry Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#1E293B"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/tvPosition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Position: Lat 12.9716, Lon 77.5946, Alt 920.0m"
+                android:textColor="#F8FAFC"
+                android:textSize="14sp"
+                android:fontFamily="monospace"/>
+
+            <TextView
+                android:id="@+id/tvSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Speed: 0.0 km/h (0.00 m/s)"
+                android:textColor="#38BDF8"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/tvHeading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Heading: 0.0° (North)"
+                android:textColor="#E2E8F0"
+                android:textSize="14sp"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
+
+        <!-- 11 Required Telemetry Fields Grid -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#1E293B"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/tvGnssMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GNSS Mode: HEALTHY"
+                android:textColor="#4ADE80"
+                android:textStyle="bold"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:id="@+id/tvPositionConfidence"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Position Confidence: 95.0% (Drift: 0.00 m)"
+                android:textColor="#E2E8F0"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/tvSatelliteCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Satellites Used: 12"
+                android:textColor="#E2E8F0"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/tvGnssAccuracy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GNSS Accuracy: 1.20 meters"
+                android:textColor="#E2E8F0"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/tvBlackoutTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Blackout Timer: 0.0s (NO OUTAGE)"
+                android:textColor="#E2E8F0"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/tvMotionClass"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Motion Class: NORMAL_DRIVING (85.0%)"
+                android:textColor="#FACC15"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/tvPhoneAlignmentWarning"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Phone Alignment: ALIGNED (OK)"
+                android:textColor="#4ADE80"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/tvRecoveryStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Recovery Status: N/A"
+                android:textColor="#E2E8F0"
+                android:textSize="13sp"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+
+        <!-- Actions -->
+        <Button
+            android:id="@+id/btnOutage"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="SIMULATE GNSS OUTAGE"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#EF4444"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/btnDebugDashboard"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="OPEN DEBUG DASHBOARD"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#3B82F6"
+            android:textSize="14sp"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+</ScrollView>

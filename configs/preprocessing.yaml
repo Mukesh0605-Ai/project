@@ -1,0 +1,16 @@
+# IO-VNBD Preprocessing Configuration
+dataset_root: "data/IO-VNBD"
+imu_rate_hz: 100.0
+ai_nav_rate_hz: 10.0
+window_size: 20
+
+split_ratios:
+  train: 0.70
+  val: 0.15
+  test: 0.15
+
+norm_accel: true
+norm_gyro: true
+interpolate_nans: true
+sync_tolerance_ms: 50
+

@@ -1,0 +1,23 @@
+# AI Velocity Model Configuration
+# Note: All hyperparameters are placeholders. No assumptions have been fabricated.
+
+data:
+  window_size: 0 # PENDING DATASET SAMPLING RATE
+  features: ["UNKNOWN"]
+  target: "UNKNOWN"
+
+model:
+  type: "1D_CNN_GRU"
+  cnn_channels: [32, 64]
+  gru_hidden_size: 64
+  fc_units: 32
+
+training:
+  batch_size: 32
+  learning_rate: 0.001
+  epochs: 50
+  early_stopping_patience: 5
+
+paths:
+  checkpoint_dir: "outputs/ai_models/"
+  results_dir: "outputs/evaluation/"

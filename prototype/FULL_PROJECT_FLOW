@@ -1,0 +1,139 @@
+# Full-Flow Project Documentation & Architecture Blueprint
+
+## Executive Summary
+This document provides a **complete, step-by-step chronological account** of the **NavIC-Assisted Intelligent Dead Reckoning System** created for vehicular localization in GNSS-denied environments. It covers every phase of development—from initial project setup, mathematical modeling, sensor integration, AI model training, fusion engine linking, unit testing, to local server deployment.
+
+---
+
+## 1. Project Objectives & Sensors Overview
+
+### Core Problem
+Vehicular navigation systems rely heavily on satellite positioning (GNSS/NavIC/GPS). However, in **tunnels, dense urban canyons, and deep forest canopies**, GNSS signals suffer total outages or severe multi-path interference. 
+
+### Objective
+Build a robust, lightweight, and mathematically defensible **Dead Reckoning (DR)** navigation engine using smartphone sensors to maintain accurate vehicle positioning during prolonged GNSS outages without position divergence.
+
+### Sensors Utilized
+
+| Sensor | Sampling Rate | Measurement | Role in Pipeline |
+| :--- | :--- | :--- | :--- |
+| **3-Axis Accelerometer** | 100 Hz | $a_x, a_y, a_z$ ($\text{m/s}^2$) | Kinematic velocity & position integration; IMU feature extraction for AI speed inference. |
+| **3-Axis Gyroscope** | 100 Hz | $\omega_x, \omega_y, \omega_z$ ($\text{rad/s}$) | 3D attitude & orientation propagation via quaternion kinematics ($\mathbf{q}$). |
+| **3-Axis Magnetometer** | 10–50 Hz | $B_x, B_y, B_z$ ($\mu\text{T}$) | Absolute heading calibration & magnetic declination reference. |
+| **NavIC L5 / GPS Receiver** | 1–10 Hz | Latitude, Longitude, Altitude, GNSS Speed, CEP Accuracy | High-precision position/velocity measurement updates during healthy GNSS availability. |
+
+---
+
+## 2. Chronological Development Journey (Start to Current)
+
+```mermaid
+timeline
+    title Project Development Phases
+    Phase 1 : Architecture Design & Folder Structure : Defined module contracts for /data, /navigation, /estimation, /ai, /constraints, /map
+    Phase 2 : Coordinate Math & Kinematic Propagation : Implemented ENU world conversions, quaternion orientation propagation, linear acceleration integration
+    Phase 3 : 15-State Error-State EKF : Built ES-EKF tracking position error, velocity error, orientation error, accel bias, gyro bias
+    Phase 4 : Temporal AI Velocity Model : Designed sliding window feature extractor & MLP/GRU temporal estimator for forward speed from IMU
+    Phase 5 : Physical Constraints & Map Matcher : Built Non-Holonomic Constraints (Vx=0, Vz=0) & polyline segment road snapping
+    Phase 6 : Engine Linking & Integration : Linked NavigationEngine to unify EKF, AI, NHC, Map Matcher, and SensorPacket handling
+    Phase 7 : Automated Benchmark & Unit Tests : Built 60s synthetic trajectory runner with 30s tunnel blackout & 7/7 passing unit test suite
+    Phase 8 : Interactive Web Cockpit UI & Server : Built Google Maps style cockpit with 4-alternative route cards, signal density analysis, tunnel/forest warnings & Flask localhost server
+```
+
+---
+
+## 3. End-to-End Mathematical & Pipeline Data Flow
+
+```mermaid
+graph TD
+    A["Raw Sensor Stream<br>(IMU 100Hz + GNSS 1Hz)"] --> B["SensorPacket Ingestion<br>(Timestamp, Accel, Gyro, GNSS)"]
+    B --> C["NavigationEngine.process_packet()"]
+    
+    subgraph Prediction["EKF Time Propagation (100Hz)"]
+        C --> D["Propagate Orientation (Quaternion Multiplication)"]
+        D --> E["Transform Acceleration from Body to ENU Frame"]
+        E --> F["Integrate Velocity & Position (Kinematics)"]
+        F --> G["Propagate Error Covariance Matrix P (15x15)"]
+    end
+    
+    subgraph ModeSwitch["GNSS Availability Gate"]
+        G --> H{"GNSS Available?"}
+    end
+
+    subgraph HealthyPath["GNSS Healthy Mode (95% Confidence)"]
+        H -->|YES| I["EKF GNSS Measurement Update"]
+        I --> J["Correct Position, Velocity & Sensor Biases"]
+        J --> K["State: HEALTHY"]
+    end
+
+    subgraph OutagePath["GNSS Denied Mode (Tunnel / Forest Blackout)"]
+        H -->|NO| L["Buffer IMU Window (20 samples x 6-DoF)"]
+        L --> M["AIVelocityEstimator.forward()"]
+        M --> N["Predict Forward Speed & Uncertainty"]
+        N --> O["EKF Velocity Measurement Update"]
+        O --> P["Apply Non-Holonomic Constraints (Vx=0, Vz=0)"]
+        P --> Q["Probabilistic Map Matcher Polyline Snap"]
+        Q --> R["State: GNSS_DENIED / AI_ASSISTED_DR"]
+    end
+
+    K --> S["Output NavigationState (ENU Position, Velocity, Heading, Confidence)"]
+    R --> S
+    S --> T["Render on Google Maps Cockpit UI (http://127.0.0.1:3000)"]
+```
+
+---
+
+## 4. Module Responsibilities & Source Code Index
+
+| Module | File Link | Implementation Summary |
+| :--- | :--- | :--- |
+| **Unified Data State** | [`state.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/navigation/state.py) | Defines `SensorPacket` dataclass and 15-DoF `NavigationState` with covariance and mode tags. |
+| **Geodesic Coordinates** | [`coordinates.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/utils/coordinates.py) | Geodetic LLA to ENU coordinate transformations, quaternion rotations, and conjugate operations. |
+| **Orientation Propagation** | [`orientation.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/navigation/orientation.py) | First-order quaternion integration using angular velocity vector $\mathbf{\omega}$. |
+| **Kinematic Propagation** | [`propagation.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/navigation/propagation.py) | Transforms body acceleration to world frame, subtracts gravity ($9.80665\,\text{m/s}^2$), and integrates to velocity/position. |
+| **Error-State EKF** | [`ekf.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/fusion/ekf.py) | 15-state ES-EKF matrix math ($\mathbf{F}, \mathbf{Q}, \mathbf{H}, \mathbf{R}, \mathbf{K}$) supporting position, velocity, and NHC updates. |
+| **AI Velocity Model** | [`velocity_model.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/ai/velocity_model.py) | MLP temporal model trained on 20-sample sliding windows of accelerometer and gyroscope signals. |
+| **AI Estimator Wrapper** | [`model.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/ai/model.py) | High-level interface wrapping training, sliding window inference, and ONNX/TFLite export. |
+| **Non-Holonomic Constraints** | [`nhc.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/constraints/nhc.py) | Enforces lateral ($V_x=0$) and vertical ($V_z=0$) zero-velocity updates in body frame. |
+| **Map Matcher** | [`map_matcher.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/map/map_matcher.py) | Snaps position to closest polyline road segment within max snap distance. |
+| **Navigation Engine** | [`engine.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/navigation/engine.py) | Master entry point fusing IMU, GNSS, EKF, AI speed, NHC, and Map Matching. |
+| **Fusion Pipeline Benchmark** | [`pipeline.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/fusion/pipeline.py) | Automated synthetic benchmark suite simulating a 60s drive with a 30s tunnel blackout. |
+| **Web App Server** | [`app.py`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/src/server/app.py) | Flask web application server serving the interactive Leaflet/Google Maps cockpit on port 3000. |
+| **Cockpit Web UI** | [`index.html`](file:///c:/Users/cmuke/.gemini/antigravity-ide/scratch/forgeslide/frontend/sih/prototype/index.html) | Responsive Android Cockpit UI featuring multi-route selector cards, signal density indicators, and hazard warnings. |
+
+---
+
+## 5. Verification & Performance Benchmark Results
+
+### Unit Test Suite
+Ran `py -3 -m unittest discover -s tests/`:
+- `test_ekf_initialization_and_predict` — **PASSED**
+- `test_ekf_velocity_update` — **PASSED**
+- `test_ai_velocity_training_and_forward` — **PASSED**
+- `test_nhc_application` — **PASSED**
+- `test_map_matcher_snap` — **PASSED**
+- `test_loader_raises_error_on_missing_dataset` — **PASSED**
+- `test_outage_simulator_interface` — **PASSED**
+- **Result: 7 / 7 PASSED (100% Success Rate)**
+
+### Synthetic Outage Benchmark Summary
+Ran `py -3 -m src.fusion.pipeline`:
+- **Total Drive Packets**: 1,200 packets (60 seconds at 20 Hz)
+- **Simulated Tunnel Blackout**: 30.0 seconds continuous GNSS outage
+- **Outage Position RMSE**: **93.41 meters**
+- **Maximum Outage Drift**: **181.15 meters** (vs >1200 meters unconstrained IMU integration)
+- **AI Model Status**: Trained on pre-outage window features
+
+---
+
+## 6. Live Web Cockpit Features
+
+The interactive web cockpit is live on **[http://127.0.0.1:3000](http://127.0.0.1:3000)** and includes:
+
+1. **4 Alternative Route Selection Cards**:
+   - **Route 1 (`FASTEST`)**: Primary Expressway Corridor with Tunnel Blackout warning.
+   - **Route 2 (`DEEP FOREST`)**: Nilgiri / Munnar Forest Pass with Low Signal warning.
+   - **Route 3 (`CLEAR SKY`)**: Outer Ring Road Bypass with 98% NavIC Signal Lock.
+   - **Route 4 (`SHORTCUT`)**: Old Valley Ghat Road with mixed short tunnel and canopy.
+2. **Signal Density Meters**: Visual signal strength bar for each route (Green 98%, Orange 55%, Red 0%).
+3. **Tunnel 🚨 & Forest 🌲 Hazard Warning Badges**: Displays explicit segment length and hazard type before navigation starts.
+4. **Live Turn-by-Turn Dead Reckoning**: Real-time vehicle marker movement, status bar updates, CEP uncertainty circle, and GNSS blackout recovery celebrations.

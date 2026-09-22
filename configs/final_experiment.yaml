@@ -1,0 +1,16 @@
+# Final Experiment Pipeline Configuration
+# PENDING DATASET
+
+session_id: "UNKNOWN"
+initialization_period_sec: 0.0
+
+blackout:
+  start_sec: 0.0
+  duration_sec: 0.0
+
+models:
+  ai_config: "configs/ai_velocity.yaml"
+  ekf_config: "configs/ekf.yaml"
+  nhc_map_config: "configs/nhc_map.yaml"
+
+output_dir: "outputs/final/"

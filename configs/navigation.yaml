@@ -1,0 +1,14 @@
+engine:
+  mode: "INITIALIZING"
+  use_ekf: true
+  use_ai_velocity: false
+  use_nhc: false
+  use_map_matching: false
+
+logging:
+  level: "INFO"
+  output_dir: "logs/navigation"
+
+sensors:
+  imu_frequency: 10  # Hz
+  gnss_frequency: 1  # Hz

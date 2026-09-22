@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>NAVISENSE-IDR | SIH 2026 — PS 26168</title>
+    <meta name="description" content="NavIC Intelligent Dead Reckoning System — SIH 2026 Problem Statement 26168" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="navisense.css?v=2.0" />
+</head>
+<body>
+
+<!-- PERSISTENT MAP (shared background for home/route/nav/dr/recovery screens) -->
+<div id="map" class="persistent-map"></div>
+
+<!-- ============================================================ -->
+<!-- TOAST NOTIFICATION -->
+<!-- ============================================================ -->
+<div id="toast" class="toast"></div>
+
+<!-- ============================================================ -->
+<!-- STATUS BAR (always visible) -->
+<!-- ============================================================ -->
+<div class="status-bar">
+    <span id="status-clock" class="status-clock">12:00</span>
+    <div class="status-center">
+        <span id="gps-badge" class="gps-badge acquiring">🔍 ACQUIRING...</span>
+    </div>
+    <div class="status-right">
+        <button id="btn-debug" class="icon-btn" title="Debug Panel">⚙</button>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 1: HOME / MAP -->
+<!-- ============================================================ -->
+<div id="screen-home" class="screen active map-screen">
+    <!-- Map is rendered by the persistent layer behind this screen -->
+    <div class="map-placeholder"></div>
+
+    <!-- GPS Info Card (top) -->
+    <div class="home-info-card">
+        <div class="gps-coords">
+            <span class="coord-label">LAT</span>
+            <span id="gps-lat" class="coord-val">--</span>
+            <span class="coord-label">LNG</span>
+            <span id="gps-lng" class="coord-val">--</span>
+            <span class="coord-label">ACC</span>
+            <span id="gps-acc" class="coord-val">--</span>
+        </div>
+        <div id="gps-status-text" class="gps-status-text">Acquiring GPS...</div>
+    </div>
+
+    <!-- Search Panel (bottom) -->
+    <div class="home-search-panel">
+        <div class="search-title">NAVISENSE-IDR</div>
+        <div class="search-subtitle">NavIC Intelligent Dead Reckoning</div>
+
+        <div class="search-row">
+            <div class="search-icon">A</div>
+            <input id="origin-input" class="search-input" type="text"
+                placeholder="Your location (auto-detected)" readonly />
+        </div>
+        <div class="search-row">
+            <div class="search-icon dest">B</div>
+            <input id="dest-input" class="search-input" type="text"
+                placeholder="Search destination or tap map..." />
+        </div>
+
+        <!-- Preset Corridors -->
+        <div class="preset-label">📍 Demo Corridors</div>
+        <div id="preset-buttons" class="preset-grid"></div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 2: ROUTE SELECTION -->
+<!-- ============================================================ -->
+<div id="screen-route" class="screen map-screen">
+    <!-- Map remains visible as background -->
+    <div class="route-overlay">
+        <div class="screen-header">
+            <button id="btn-route-back" class="back-btn">←</button>
+            <span class="screen-title">Choose Route</span>
+        </div>
+
+        <div id="route-status" class="route-status">Calculating routes...</div>
+
+        <div id="route-list" class="route-list"></div>
+
+        <div class="route-selected-info-row">
+            <span id="selected-route-info" class="selected-route-info"></span>
+        </div>
+
+        <div class="outage-zone-note" id="outage-zone-legend">
+            <span class="outage-icon">⚠️</span>
+            Dashed zones = GNSS Blackout Sectors (Tunnels, Forests)
+        </div>
+
+        <button id="btn-start-nav" class="btn-primary btn-large">
+            ▶ Start Navigation
+        </button>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 3: NAVIGATION (GPS Active) -->
+<!-- ============================================================ -->
+<div id="screen-navigation" class="screen map-screen">
+    <!-- Map is always rendered in background -->
+
+    <!-- Navigation Header (Turn-by-turn) -->
+    <div class="nav-header">
+        <div class="maneuver-panel">
+            <div id="maneuver-icon" class="maneuver-icon">↱</div>
+            <div class="maneuver-text">
+                <div id="maneuver-instruction" class="maneuver-instruction">Follow the road</div>
+                <div id="nav-dest-name" class="nav-dest-name">Destination</div>
+            </div>
+        </div>
+        <div class="nav-mode-row">
+            <div class="gps-signal-bars">
+                <span class="signal-bar"></span>
+                <span class="signal-bar"></span>
+                <span class="signal-bar"></span>
+                <span class="signal-bar"></span>
+            </div>
+            <span class="signal-text">GPS</span>
+        </div>
+    </div>
+
+    <!-- Left HUD: Speed -->
+    <div class="speed-hud">
+        <div class="speed-val" id="nav-speed">0</div>
+        <div class="speed-unit">km/h</div>
+        <div class="speed-limit-badge">
+            <span id="nav-speed-limit">60</span>
+        </div>
+    </div>
+
+    <!-- Right HUD: Sensor Data -->
+    <div class="sensor-hud">
+        <div class="sensor-row">
+            <span class="sensor-label">Accel X</span>
+            <span id="hud-ax" class="sensor-val">0.00</span>
+        </div>
+        <div class="sensor-row">
+            <span class="sensor-label">Accel Y</span>
+            <span id="hud-ay" class="sensor-val">0.00</span>
+        </div>
+        <div class="sensor-row">
+            <span class="sensor-label">Gyro Z</span>
+            <span id="hud-gz" class="sensor-val">0.00</span>
+        </div>
+        <div class="sensor-source-badge">📱 IMU</div>
+    </div>
+
+    <!-- Unified Bottom Sheet -->
+    <div class="nav-bottom-sheet">
+        <div class="bottom-metrics-grid">
+            <div class="b-metric">
+                <div class="b-label" id="bm-1-lbl">Speed</div>
+                <div class="b-val" id="bm-1-val">-- km/h</div>
+            </div>
+            <div class="b-metric">
+                <div class="b-label" id="bm-2-lbl">Distance</div>
+                <div class="b-val" id="bm-2-val">-- km</div>
+            </div>
+            <div class="b-metric">
+                <div class="b-label" id="bm-3-lbl">ETA</div>
+                <div class="b-val" id="bm-3-val">-- min</div>
+            </div>
+        </div>
+
+        <div class="bottom-mode-row">
+            <div class="mode-info">
+                <div class="b-label">Mode</div>
+                <div class="mode-pill gps" id="current-mode-pill">Normal GPS</div>
+            </div>
+            <div class="conf-info" id="conf-info-container" style="display: none;">
+                <div class="b-label">Confidence</div>
+                <div class="b-val" id="bm-conf-val">--</div>
+            </div>
+        </div>
+
+        <!-- Controls Row (for simulation purposes) -->
+        <div class="nav-controls" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
+            <div class="sim-speed-group">
+                <span class="sim-label">SIM</span>
+                <button class="sim-speed-btn active" data-speed="1">1×</button>
+                <button class="sim-speed-btn" data-speed="2">2×</button>
+                <button class="sim-speed-btn" data-speed="5">5×</button>
+            </div>
+            <button id="btn-sim-gps-action" class="btn-danger btn-sm">📵 GPS Loss</button>
+            <button id="btn-end-nav" class="btn-outline btn-sm">✕ End</button>
+        </div>
+    </div>
+
+    <!-- Satellite constellation mini (top right) -->
+    <div class="sat-mini-panel">
+        <div class="sat-mini-label">NavIC</div>
+        <div class="sat-bars">
+            <div class="sat-bar" style="height:70%"></div>
+            <div class="sat-bar" style="height:85%"></div>
+            <div class="sat-bar" style="height:60%"></div>
+            <div class="sat-bar" style="height:90%"></div>
+            <div class="sat-bar" style="height:75%"></div>
+            <div class="sat-bar" style="height:55%"></div>
+        </div>
+        <div class="sat-count">7 sats</div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 4: GPS LOST / INTELLIGENT DEAD RECKONING -->
+<!-- ============================================================ -->
+<div id="screen-dr" class="screen map-screen">
+    <!-- Map continues in background (DR vehicle continues moving) -->
+
+    <!-- GPS Lost Banner -->
+    <div class="gps-lost-banner" id="banner-gps-lost">
+        <div class="gps-lost-icon-wrap">
+            <span class="gps-lost-icon">📵</span>
+        </div>
+        <div class="gps-lost-text">
+            <div class="gps-lost-title">GPS Signal Lost</div>
+            <div class="gps-lost-sub">Switching to Intelligent Dead Reckoning...</div>
+        </div>
+    </div>
+    
+    <!-- DR Floating Badge (Right side) -->
+    <div class="dr-floating-badge">
+        <span class="dr-text">DR</span>
+        <span class="dr-status">ON</span>
+    </div>
+
+    <!-- Diagnostics Panel (Screen 7) -->
+    <div class="diagnostics-panel" id="diagnostics-panel" style="display: none;">
+        <div class="diag-header">
+            <div class="diag-icon">⚙️</div>
+            <div class="diag-title-wrap">
+                <div class="diag-title">Intelligent Dead Reckoning</div>
+                <div class="diag-sub">Using IMU + AI + EKF + Map Matching</div>
+            </div>
+        </div>
+        
+        <div class="diag-list">
+            <div class="diag-item">
+                <div class="diag-item-icon">💡</div>
+                <div class="diag-item-text">
+                    <div class="diag-item-title">IMU Data</div>
+                    <div class="diag-item-sub">(Accelerometer + Gyro)</div>
+                </div>
+                <div class="diag-item-status">✅</div>
+            </div>
+            <div class="diag-item">
+                <div class="diag-item-icon">🧠</div>
+                <div class="diag-item-text">
+                    <div class="diag-item-title">AI Model</div>
+                    <div class="diag-item-sub">(Velocity Estimation)</div>
+                </div>
+                <div class="diag-item-status">✅</div>
+            </div>
+            <div class="diag-item">
+                <div class="diag-item-icon">📍</div>
+                <div class="diag-item-text">
+                    <div class="diag-item-title">EKF / DR</div>
+                    <div class="diag-item-sub">(State Estimation)</div>
+                </div>
+                <div class="diag-item-status">✅</div>
+            </div>
+            <div class="diag-item">
+                <div class="diag-item-icon">🗺️</div>
+                <div class="diag-item-text">
+                    <div class="diag-item-title">Map Matching</div>
+                    <div class="diag-item-sub">(Road Constraint)</div>
+                </div>
+                <div class="diag-item-status">✅</div>
+            </div>
+        </div>
+        
+        <div class="diag-footer">
+            <span class="diag-footer-icon">🔄</span>
+            Position Updated Every 0.5 sec
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 5: GPS RECOVERY -->
+<!-- ============================================================ -->
+<div id="screen-recovery" class="screen">
+    <div class="recovery-card">
+        <div class="recovery-icon">✅</div>
+        <div class="recovery-title">NavIC Signal Restored</div>
+        <div class="recovery-sub">Realigning position from Dead Reckoning...</div>
+
+        <!-- Recovery animation bar -->
+        <div class="recovery-progress-wrap">
+            <div class="recovery-progress-bar" id="recovery-bar"></div>
+        </div>
+
+        <div class="recovery-metrics">
+            <div class="recovery-metric">
+                <div class="recovery-metric-label">GPS Outage Duration</div>
+                <div id="recovery-duration" class="recovery-metric-val">—</div>
+            </div>
+            <div class="recovery-metric">
+                <div class="recovery-metric-label">Final Drift at Recovery</div>
+                <div id="recovery-drift" class="recovery-metric-val">—</div>
+            </div>
+            <div class="recovery-metric">
+                <div class="recovery-metric-label">DR Distance Covered</div>
+                <div id="recovery-dist" class="recovery-metric-val">—</div>
+            </div>
+        </div>
+
+        <div class="recovery-label-row">
+            <span class="dr-ai-label-chip">1D-CNN + GRU + EKF Dead Reckoning Complete</span>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 6: DEBUG PANEL -->
+<!-- ============================================================ -->
+<div id="screen-debug" class="screen">
+    <div class="debug-panel">
+        <div class="screen-header">
+            <button id="btn-debug-back" class="back-btn">←</button>
+            <span class="screen-title">Debug Telemetry</span>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-section-title">📡 GPS</div>
+            <div class="debug-table">
+                <div class="debug-row"><span>Latitude</span><span id="dbg-lat">—</span></div>
+                <div class="debug-row"><span>Longitude</span><span id="dbg-lng">—</span></div>
+                <div class="debug-row"><span>Speed</span><span id="dbg-speed">—</span></div>
+                <div class="debug-row"><span>Heading</span><span id="dbg-heading">—</span></div>
+                <div class="debug-row"><span>Source</span><span id="dbg-source">—</span></div>
+                <div class="debug-row"><span>GPS Status</span><span id="dbg-gps-status">—</span></div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-section-title">📱 IMU Sensors</div>
+            <div class="debug-table">
+                <div class="debug-row"><span>Accel X</span><span id="dbg-ax">—</span></div>
+                <div class="debug-row"><span>Accel Y</span><span id="dbg-ay">—</span></div>
+                <div class="debug-row"><span>Accel Z</span><span id="dbg-az">—</span></div>
+                <div class="debug-row"><span>Gyro X</span><span id="dbg-gx">—</span></div>
+                <div class="debug-row"><span>Gyro Y</span><span id="dbg-gy">—</span></div>
+                <div class="debug-row"><span>Gyro Z</span><span id="dbg-gz">—</span></div>
+                <div class="debug-row"><span>Type</span><span id="dbg-sensor-type">—</span></div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-section-title">🤖 Dead Reckoning</div>
+            <div class="debug-table">
+                <div class="debug-row"><span>DR Active</span><span id="dbg-dr-active">—</span></div>
+                <div class="debug-row"><span>GPS Points Logged</span><span id="dbg-session-gps">0</span></div>
+                <div class="debug-row"><span>DR Points Logged</span><span id="dbg-session-dr">0</span></div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-section-title">🧠 AI Model</div>
+            <div class="debug-table">
+                <div class="debug-row"><span>Architecture</span><span>GRU 2L × 32u</span></div>
+                <div class="debug-row"><span>Input Features</span><span>8 (ax,ay,az,gx,gy,gz,dt,v)</span></div>
+                <div class="debug-row"><span>Training Data</span><span class="sim-chip">IO-VNBD SIMULATED</span></div>
+                <div class="debug-row"><span>Outputs</span><span>Δspeed, Δheading</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCREEN 7: FINAL RESULTS -->
+<!-- ============================================================ -->
+<div id="screen-results" class="screen">
+    <div class="results-panel">
+        <div class="results-header">
+            <div class="results-logo">🛰️</div>
+            <div class="results-title">NAVISENSE-IDR</div>
+            <div class="results-sub">SIH 2026 · PS 26168 · Session Report</div>
+        </div>
+
+        <div class="results-score-ring">
+            <div class="results-score-val" id="res-score">--</div>
+            <div class="results-score-label">Overall Score</div>
+        </div>
+
+        <div class="results-metrics-grid">
+            <div class="result-metric">
+                <div class="result-metric-icon">🔴</div>
+                <div class="result-metric-val" id="res-blackout">—</div>
+                <div class="result-metric-label">GPS Blackout</div>
+            </div>
+            <div class="result-metric">
+                <div class="result-metric-icon">📏</div>
+                <div class="result-metric-val" id="res-distance">—</div>
+                <div class="result-metric-label">Distance</div>
+            </div>
+            <div class="result-metric">
+                <div class="result-metric-icon">📍</div>
+                <div class="result-metric-val" id="res-pos-error">—</div>
+                <div class="result-metric-label">Position Error</div>
+            </div>
+            <div class="result-metric">
+                <div class="result-metric-icon">📉</div>
+                <div class="result-metric-val" id="res-max-drift">—</div>
+                <div class="result-metric-label">Max Drift</div>
+            </div>
+            <div class="result-metric">
+                <div class="result-metric-icon">⚡</div>
+                <div class="result-metric-val" id="res-speed-error">—</div>
+                <div class="result-metric-label">Speed Error</div>
+            </div>
+            <div class="result-metric">
+                <div class="result-metric-icon">🧭</div>
+                <div class="result-metric-val" id="res-heading-error">—</div>
+                <div class="result-metric-label">Heading Error</div>
+            </div>
+            <div class="result-metric">
+                <div class="result-metric-icon">⏱</div>
+                <div class="result-metric-val" id="res-recovery">—</div>
+                <div class="result-metric-label">Recovery Time</div>
+            </div>
+            <div class="result-metric">
+                <div class="result-metric-icon">🤖</div>
+                <div class="result-metric-val" id="res-confidence">—</div>
+                <div class="result-metric-label">AI Confidence</div>
+            </div>
+        </div>
+
+        <!-- Performance Chart -->
+        <div class="results-chart-wrap">
+            <div class="chart-title">Confidence & Drift Timeline</div>
+            <canvas id="results-chart" class="results-chart"></canvas>
+            <div class="chart-legend">
+                <span class="legend-green">— Confidence</span>
+                <span class="legend-red">— — Drift</span>
+            </div>
+        </div>
+
+        <div class="results-actions">
+            <button id="btn-results-again" class="btn-outline">🔄 Run Again</button>
+            <button id="btn-results-home" class="btn-primary">🏠 Home</button>
+        </div>
+
+        <div class="results-footer">
+            <span class="ai-label-chip">AI Model: GRU 2L×32u · IO-VNBD Pre-trained (SIMULATED)</span>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- LIBRARIES -->
+<!-- ============================================================ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module" src="app.js?v=2.1"></script>
+
+</body>
+</html>

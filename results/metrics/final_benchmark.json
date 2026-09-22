@@ -1,0 +1,15 @@
+{
+    "outage_duration_s": 30.0,
+    "Experiment_B_IMU_Only": {
+        "rmse_m": 1359.4873356631094,
+        "max_drift_m": 3316.113701891177
+    },
+    "Experiment_C_AI_EKF": {
+        "rmse_m": 323.16888393634014,
+        "max_drift_m": 571.9841203764028
+    },
+    "Experiment_D_Full_Pipeline": {
+        "rmse_m": 467.31794263879186,
+        "max_drift_m": 763.6899345461776
+    }
+}
