@@ -34,8 +34,8 @@ const S = {
     isRecovering: false,
     isArrived: false,
     // Position
-    currentLat: 28.6139,
-    currentLng: 77.2090,
+    currentLat: null,
+    currentLng: null,
     currentSpeed: 0,
     currentHeading: 0,
     currentAccuracy: 5,
@@ -763,13 +763,17 @@ function onGPSUpdate(pos) {
         mapEngine.updateVehicle(pos.lat, pos.lng, pos.bearing||0, pos.accuracy, 'GPS');
     }
 
-    if (!S.origin) {
-        S.origin = { lat: pos.lat, lng: pos.lng, label: 'My Location' };
-        routing.reverseGeocode(pos.lat, pos.lng).then(label => {
-            S.origin.label = label;
-            const el = $('origin-input');
-            if (el && el.value.startsWith('📍')) el.value = `📍 ${label}`;
-        });
+    if (!S.origin || S.gpsIsLive) {
+        S.origin = { lat: pos.lat, lng: pos.lng, label: 'Current Location' };
+        // Debounce reverse geocoding to avoid API spam
+        if (!S._lastGeocode || Date.now() - S._lastGeocode > 10000) {
+            S._lastGeocode = Date.now();
+            routing.reverseGeocode(pos.lat, pos.lng).then(label => {
+                S.origin.label = label;
+                const el = $('origin-input');
+                if (el && el.value.startsWith('📍')) el.value = `📍 ${label}`;
+            });
+        }
         const el = $('origin-input');
         if (el) el.value = `📍 ${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}`;
     }
@@ -798,8 +802,14 @@ function onSensorUpdate(data) {
 // ROUTING & NAVIGATION START
 // ============================================================
 async function planRoute(outageZones) {
-    if (!S.origin || !S.destination) {
-        toast('Set origin & destination first', 'warning'); return;
+    if (!S.origin && S.currentLat && S.currentLng) {
+        S.origin = { lat: S.currentLat, lng: S.currentLng, label: 'Current Location' };
+    }
+    if (!S.origin) {
+        toast('Waiting for GPS location...', 'warning'); return;
+    }
+    if (!S.destination) {
+        toast('Set destination first', 'warning'); return;
     }
     T('route-status', '🔍 Calculating routes via OSRM...');
     showScreen('route');
@@ -933,13 +943,20 @@ function buildPresets() {
 
 async function loadPreset(p) {
     toast(`Loading ${p.name}...`, 'info');
-    S.origin = { ...p.origin };
+    
+    // Use Real GPS location if available, otherwise fallback to preset origin
+    if (S.gpsIsLive && S.realLat && S.realLng) {
+        S.origin = { lat: S.realLat, lng: S.realLng, label: 'Current Location' };
+    } else {
+        S.origin = { ...p.origin };
+    }
+    
     S.destination = { ...p.dest };
     const oi = $('origin-input'), di = $('dest-input');
-    if (oi) oi.value = `📍 ${p.origin.label}`;
-    if (di) di.value = `📍 ${p.dest.label}`;
+    if (oi) oi.value = `📍 ${S.origin.label}`;
+    if (di) di.value = `📍 ${S.destination.label}`;
     mapEngine.setMarkers(S.origin, S.destination);
-    mapEngine.flyTo(p.origin.lat, p.origin.lng, 13);
+    mapEngine.flyTo(S.origin.lat, S.origin.lng, 13);
     await planRoute(p.outageZones);
 }
 
@@ -1120,8 +1137,12 @@ function wireEvents() {
 // INIT
 // ============================================================
 async function init() {
-    // Boot map immediately
-    mapEngine.init(28.6139, 77.2090, 14);
+    // Boot map immediately at a neutral view (Center of India)
+    const startLat = S.currentLat !== null ? S.currentLat : 20.5937;
+    const startLng = S.currentLng !== null ? S.currentLng : 78.9629;
+    const startZoom = S.currentLat !== null ? 14 : 5;
+    
+    mapEngine.init(startLat, startLng, startZoom);
     mapEngine.enableDestinationPick(onMapTap);
 
     showScreen('home');
