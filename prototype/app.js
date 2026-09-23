@@ -79,6 +79,9 @@ const S = {
     manualGPSLoss: false,
     // AI GRU state (hidden states)
     aiH1: null, aiH2: null,
+    // Deviation & Network
+    deviationTime: 0,
+    isOffline: !navigator.onLine,
 };
 
 // ============================================================
@@ -229,13 +232,19 @@ function stopMainLoop() {
 function tick(dt) {
     if (!S.route || !S.route.coords) return;
 
-    // -------- ROUTE ADVANCEMENT --------
-    // Advance route position based on current speed
+    // -------- ROUTE ADVANCEMENT (SIMULATION ONLY) --------
     const coords = S.route.coords;
-    const speedMs = (S.currentSpeed / 3.6) * S.simSpeed;
-    const distThisFrame = speedMs * dt;
-
-    advanceRoute(coords, distThisFrame);
+    if (!S.gpsIsLive && S.gpsStatus === 'SIMULATED') {
+        const speedMs = (S.currentSpeed / 3.6) * S.simSpeed;
+        const distThisFrame = speedMs * dt;
+        advanceRoute(coords, distThisFrame);
+    } else if (S.gpsIsLive) {
+        // Find nearest route segment index for accurate ETA and map-matching
+        const matched = mapMatch(S.currentLat, S.currentLng, coords);
+        if (matched && lastMatchedRouteIdx > S.routeIdx) {
+            S.routeIdx = lastMatchedRouteIdx;
+        }
+    }
 
     // Feed vehicle state to sensor engine so synthetic IMU works
     sensors.updateVehicleState(S.currentSpeed, S.currentHeading, S.isGPSLost);
@@ -334,20 +343,50 @@ function tick(dt) {
         updateDRHud(imu);
 
     } else {
-        // GPS Active: use interpolated route position
-        const pt = getRoutePosition(coords);
-        S.currentLat = pt.lat;
-        S.currentLng = pt.lng;
-        displayLat = pt.lat;
-        displayLng = pt.lng;
+        // GPS Active
+        if (S.gpsIsLive && S.realLat) {
+            S.currentLat = S.realLat;
+            S.currentLng = S.realLng;
+        } else {
+            const pt = getRoutePosition(coords);
+            S.currentLat = pt.lat;
+            S.currentLng = pt.lng;
+        }
+        displayLat = S.currentLat;
+        displayLng = S.currentLng;
         displayMode = 'GPS';
 
-        // Update heading from route direction
-        const nextIdx = Math.min(S.routeIdx + 1, coords.length - 1);
-        S.currentHeading = computeBearing(
-            coords[S.routeIdx].lat, coords[S.routeIdx].lng,
-            coords[nextIdx].lat, coords[nextIdx].lng
-        );
+        // Update heading from route direction ONLY if simulated
+        if (!S.gpsIsLive && S.gpsStatus === 'SIMULATED') {
+            const nextIdx = Math.min(S.routeIdx + 1, coords.length - 1);
+            S.currentHeading = computeBearing(
+                coords[S.routeIdx].lat, coords[S.routeIdx].lng,
+                coords[nextIdx].lat, coords[nextIdx].lng
+            );
+        }
+
+        // Deviation Check
+        if (S.gpsIsLive && !S.manualGPSLoss) {
+            const matched = mapMatch(displayLat, displayLng, coords);
+            if (matched) {
+                const distToRoute = haversine(displayLat, displayLng, matched.lat, matched.lng);
+                if (distToRoute > 50) {
+                    S.deviationTime += dt;
+                    if (S.deviationTime > 3) {
+                        toast('Route deviation detected! Recalculating...', 'warning');
+                        S.deviationTime = 0;
+                        if (!S.isOffline) {
+                            S.origin = { lat: displayLat, lng: displayLng, label: 'Current Location' };
+                            planRoute();
+                        } else {
+                            toast('Network offline: Cannot recalculate route.', 'error');
+                        }
+                    }
+                } else {
+                    S.deviationTime = 0;
+                }
+            }
+        }
     }
 
     // -------- UPDATE MAP --------
@@ -469,7 +508,7 @@ function triggerGPSLoss() {
     // Initialise DR from current GPS position
     S.drLat = S.currentLat;
     S.drLng = S.currentLng;
-    S.drSpeed = Math.max(S.currentSpeed, 20); // minimum 20 km/h in DR
+    S.drSpeed = S.currentSpeed; // Inherit last confirmed GPS speed
     S.drHeading = S.currentHeading;
     S.drConfidence = 0.95;
     S.drDrift = 0;
@@ -484,6 +523,14 @@ function triggerGPSLoss() {
         S.blackoutSeconds += 0.1;
         T('dr-blackout-timer', S.blackoutSeconds.toFixed(1) + 's');
         T('dr-drift-display', S.drDrift.toFixed(2) + 'm');
+        
+        // Cap DR at 300 seconds (5 mins) to prevent indefinite drift
+        if (S.blackoutSeconds > 300) {
+            clearInterval(S.blackoutTimerId);
+            toast('🔴 Navigation stopped: Prolonged GPS loss (>5 mins).', 'error');
+            stopMainLoop();
+            showScreen('route');
+        }
     }, 100);
 
     showScreen('dr');
@@ -539,9 +586,12 @@ function updateNavHUD(lat, lng, coords) {
         T('bm-3-lbl', 'ETA');
         T('bm-3-val', fmtTime(etaS));
         
-        T('current-mode-pill', 'Normal GPS');
+        let gpsLabel = '🟢 GPS Good';
+        if (S.gpsStatus === 'WEAK') gpsLabel = '🟡 GPS Weak';
+
+        T('current-mode-pill', gpsLabel);
         const pill = $('current-mode-pill');
-        if (pill) { pill.className = 'mode-pill gps'; }
+        if (pill) { pill.className = 'mode-pill gps ' + S.gpsStatus.toLowerCase(); }
         
         const confContainer = $('conf-info-container');
         if (confContainer) confContainer.style.display = 'none';
@@ -585,9 +635,9 @@ function updateDRHud(imu) {
     T('bm-3-lbl', 'Blackout Time');
     T('bm-3-val', formatDuration(dur));
     
-    T('current-mode-pill', 'Intelligent DR');
+    T('current-mode-pill', '🔵 Estimated (DR)');
     const pill = $('current-mode-pill');
-    if (pill) { pill.className = 'mode-pill dr'; }
+    if (pill) { pill.className = 'mode-pill dr estimated'; }
     
     const confContainer = $('conf-info-container');
     if (confContainer) confContainer.style.display = 'flex';
@@ -620,7 +670,16 @@ function onArrived() {
 
     toast('🏁 Arrived at destination!', 'success', 5000);
     speak('You have arrived at your destination.');
-    setTimeout(() => showResultsScreen(), 1500);
+    
+    // Show Arrival Overlay
+    const overlay = $('arrival-overlay');
+    const destName = $('arrival-dest-name');
+    if (overlay && destName) {
+        destName.textContent = S.destination ? S.destination.label : 'Destination';
+        overlay.style.display = 'flex';
+    } else {
+        setTimeout(() => showResultsScreen(), 1500);
+    }
 }
 
 // ============================================================
@@ -685,6 +744,8 @@ function drawResultsChart() {
 // ============================================================
 function onGPSUpdate(pos) {
     S.gpsIsLive = true;
+    S.realLat = pos.lat;
+    S.realLng = pos.lng;
     S.currentLat = pos.lat;
     S.currentLng = pos.lng;
     S.currentSpeed = pos.speed || 0;
@@ -719,7 +780,9 @@ function onGPSStatus(status) {
     const badge = $('gps-badge');
     if (!badge) return;
     if (status === 'LOCKED') {
-        badge.textContent = '📡 GPS LOCKED'; badge.className = 'gps-badge locked';
+        badge.textContent = '🟢 GPS LOCKED'; badge.className = 'gps-badge locked';
+    } else if (status === 'WEAK') {
+        badge.textContent = '🟡 GPS WEAK'; badge.className = 'gps-badge weak';
     } else if (status === 'ACQUIRING') {
         badge.textContent = '🔍 ACQUIRING...'; badge.className = 'gps-badge acquiring';
     } else {
@@ -930,7 +993,8 @@ function wireEvents() {
         const res = await routing.geocode(q);
         if (res.length) {
             S.destination = res[0];
-            di.value = `📍 ${res[0].label}`;
+            const typeLabel = res[0].type ? ` (${res[0].type})` : '';
+            di.value = `📍 ${res[0].label}${typeLabel}`;
             mapEngine.setMarkers(S.origin, S.destination);
             await planRoute();
         } else toast('Location not found', 'warning');
@@ -945,7 +1009,8 @@ function wireEvents() {
         const res = await routing.geocode(q);
         if (res.length) {
             S.origin = res[0];
-            oi.value = `📍 ${res[0].label}`;
+            const typeLabel = res[0].type ? ` (${res[0].type})` : '';
+            oi.value = `📍 ${res[0].label}${typeLabel}`;
         }
     });
 
@@ -1006,8 +1071,24 @@ function wireEvents() {
     const bd = $('btn-debug');
     if (bd) bd.addEventListener('click', () => showScreen('debug'));
 
+    window.addEventListener('offline', () => {
+        S.isOffline = true;
+        toast('📡 Network Offline - Using cached route', 'error', 0);
+    });
+    window.addEventListener('online', () => {
+        S.isOffline = false;
+        toast('📡 Network Reconnected', 'success');
+    });
+
     const bdb = $('btn-debug-back');
     if (bdb) bdb.addEventListener('click', () => showScreen(S.isNavigating ? (S.isGPSLost ? 'dr' : 'navigation') : 'home'));
+
+    const btnResults = $('btn-view-results');
+    if (btnResults) btnResults.addEventListener('click', () => {
+        const overlay = $('arrival-overlay');
+        if (overlay) overlay.style.display = 'none';
+        showResultsScreen();
+    });
 
     // Results actions
     const rh = $('btn-results-home');

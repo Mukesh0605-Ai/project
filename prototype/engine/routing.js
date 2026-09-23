@@ -20,6 +20,7 @@ export class RoutingEngine {
                     lat: parseFloat(d.lat),
                     lng: parseFloat(d.lon),
                     label: d.display_name.split(',').slice(0, 2).join(', '),
+                    type: (d.type || d.class || 'location').charAt(0).toUpperCase() + (d.type || d.class || 'location').slice(1),
                     full: d.display_name
                 }));
             }

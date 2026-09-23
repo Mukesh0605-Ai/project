@@ -30,7 +30,6 @@ export class GPSEngine {
             (pos) => {
                 this.isLive = true;
                 this._processPosition(pos);
-                this._setStatus('LOCKED');
                 // Then start watching
                 this._startWatch();
             },
@@ -46,7 +45,6 @@ export class GPSEngine {
         this.watchId = navigator.geolocation.watchPosition(
             (pos) => {
                 this.isLive = true;
-                this._setStatus('LOCKED');
                 this._processPosition(pos);
             },
             (err) => {
@@ -104,6 +102,12 @@ export class GPSEngine {
             ts,
             source: 'GPS'
         };
+
+        if (accuracy > 30) {
+            this._setStatus('WEAK');
+        } else {
+            this._setStatus('LOCKED');
+        }
 
         if (this.onUpdate) this.onUpdate(update);
     }
