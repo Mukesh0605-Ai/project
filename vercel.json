@@ -1,0 +1,17 @@
+{
+  "builds": [
+    {
+      "src": "src/server/app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    { "src": "/state", "dest": "/src/server/app.py" },
+    { "src": "/reset", "dest": "/src/server/app.py" },
+    { "src": "/outage", "dest": "/src/server/app.py" },
+    { "src": "/update", "dest": "/src/server/app.py" },
+    { "src": "/api/(.*)", "dest": "/src/server/app.py" },
+    { "src": "/", "dest": "/prototype/index.html" },
+    { "src": "/(.*)", "dest": "/prototype/$1" }
+  ]
+}
