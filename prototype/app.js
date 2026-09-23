@@ -761,6 +761,12 @@ function onGPSUpdate(pos) {
         const el = $('gps-status-text');
         if (el) el.classList.add('locked');
         mapEngine.updateVehicle(pos.lat, pos.lng, pos.bearing||0, pos.accuracy, 'GPS');
+        
+        // Fly to user location on first lock
+        if (!S._hasFlownToGPS) {
+            S._hasFlownToGPS = true;
+            mapEngine.flyTo(pos.lat, pos.lng, 15);
+        }
     }
 
     if (!S.origin || S.gpsIsLive) {
@@ -1047,7 +1053,10 @@ function wireEvents() {
     // Manual GPS Toggle Action
     const bg = $('btn-sim-gps-action');
     if (bg) bg.addEventListener('click', () => {
-        if (!S.isNavigating) return;
+        if (!S.isNavigating) {
+            toast('Start navigation to test GPS Loss/DR', 'warning');
+            return;
+        }
         if (S.isGPSLost) {
             triggerGPSRecovery();
             bg.textContent = '📵 GPS Loss';
@@ -1126,6 +1135,9 @@ function wireEvents() {
     // Sim speed buttons
     document.querySelectorAll('.sim-speed-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+            if (S.gpsIsLive) {
+                toast('Simulation speed is disabled during Real GPS tracking', 'warning');
+            }
             S.simSpeed = parseFloat(btn.dataset.speed);
             document.querySelectorAll('.sim-speed-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
