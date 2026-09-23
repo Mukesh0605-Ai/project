@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="navisense.css?v=2.0" />
+    <link rel="stylesheet" href="navisense.css?v=2.5" />
 </head>
 <body>
 
@@ -27,29 +27,40 @@
 <div class="status-bar">
     <span id="status-clock" class="status-clock">12:00</span>
     <div class="status-center">
-        <span id="gps-badge" class="gps-badge acquiring">🔍 ACQUIRING...</span>
+        <span id="gps-badge" class="gps-badge waiting">⏳ GPS WAITING</span>
     </div>
-    <div class="status-right">
+    <div class="status-right" style="display: flex; align-items: center; gap: 8px;">
+        <span id="net-badge" class="net-badge online" title="Network Connectivity">● ONLINE</span>
         <button id="btn-debug" class="icon-btn" title="Debug Panel">⚙</button>
     </div>
 </div>
+
+<!-- ============================================================ -->
+<!-- FLOATING "MY LOCATION" RECENTER BUTTON (Visible on Map Screens) -->
+<!-- ============================================================ -->
+<button id="btn-my-location" class="fab-my-location" title="My Location" aria-label="Recenter on My Location">
+    <span class="my-loc-icon">🎯</span>
+</button>
 
 <!-- ============================================================ -->
 <!-- SCREEN 1: HOME / MAP -->
 <!-- ============================================================ -->
 <div id="screen-home" class="screen active map-screen">
     <!-- Floating Top Search Bar -->
-    <div class="floating-search-bar">
-        <div class="search-profile-icon">M</div>
-        <input id="dest-input" class="search-input" type="text" placeholder="Search here" />
-        <div class="search-mic-icon">🎙️</div>
+    <div class="floating-search-bar" id="search-container">
+        <div class="search-profile-icon">🔍</div>
+        <input id="dest-input" class="search-input" type="text" placeholder="Search village, city, POI, landmark..." autocomplete="off" />
+        <button id="btn-search-clear" class="search-clear-btn" style="display: none;">✕</button>
     </div>
+
+    <!-- Search Results Dropdown -->
+    <div id="search-results" class="search-results-dropdown" style="display: none;"></div>
 
     <!-- Home Bottom Sheet (Demo Corridors) -->
     <div class="home-bottom-sheet">
         <div class="sheet-handle"></div>
-        <div class="sheet-title">Demo Corridors</div>
-        <div class="sheet-subtitle">Select a pre-configured route with GNSS Outage sectors</div>
+        <div class="sheet-title">Demo Corridors (Simulation Only)</div>
+        <div class="sheet-subtitle">Select a corridor to test GNSS Blackout & Dead Reckoning</div>
         <div id="preset-buttons" class="preset-list"></div>
     </div>
 
@@ -68,17 +79,17 @@
 <!-- ============================================================ -->
 <div id="screen-route" class="screen map-screen">
     <!-- Floating Top Search Bar (Route Mode) -->
-    <div class="floating-search-bar" style="border-radius: 16px; flex-direction: column; align-items: stretch; padding: 16px;">
-        <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+    <div class="floating-search-bar" style="border-radius: 16px; flex-direction: column; align-items: stretch; padding: 14px;">
+        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
             <button id="btn-route-back" style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer;">←</button>
             <div style="flex:1;">
-                <input class="search-input" type="text" value="Your Location" readonly style="width:100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;" />
+                <input id="route-origin-display" class="search-input" type="text" value="📍 Your Location" readonly style="width:100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; font-size: 14px;" />
             </div>
         </div>
-        <div style="display: flex; gap: 12px; align-items: center;">
-            <div style="width: 20px;"></div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="width: 20px; text-align: center; color: #EF4444; font-size: 16px;">📍</div>
             <div style="flex:1;">
-                <input id="route-dest-display" class="search-input" type="text" value="Destination" readonly style="width:100%;" />
+                <input id="route-dest-display" class="search-input" type="text" value="Selected Destination" readonly style="width:100%; font-size: 14px; font-weight: 600;" />
             </div>
         </div>
     </div>
@@ -87,16 +98,17 @@
     <div class="home-bottom-sheet" style="bottom: 0;">
         <div class="sheet-handle"></div>
         
-        <div id="route-status" class="route-status" style="color: var(--text2); font-size: 12px; margin-bottom: 12px;">Calculating routes...</div>
+        <div id="route-status" class="route-status" style="color: var(--text2); font-size: 12px; margin-bottom: 8px;">Calculating route...</div>
         
-        <div class="route-selected-info-row" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
-            <span id="selected-route-info" class="selected-route-info" style="font-size: 24px; font-weight: 800; color: #34C759;">-- min (--- km)</span>
-            <div class="outage-zone-note" id="outage-zone-legend" style="font-size: 10px; color: var(--text3); max-width: 120px; text-align: right;">
-                <span class="outage-icon" style="color: #FF9F0A;">⚠️</span> Contains GNSS Blackout
-            </div>
+        <div class="route-selected-info-row" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px;">
+            <span id="selected-route-info" class="selected-route-info" style="font-size: 22px; font-weight: 800; color: #34C759;">-- min (--- km)</span>
+            <div id="fallback-route-warning" style="display: none; font-size: 11px; color: #FF9F0A;">⚠️ Offline Direct Line</div>
         </div>
 
-        <button id="btn-start-nav" class="btn-primary btn-large" style="width: 100%; padding: 16px; border-radius: 20px; font-size: 18px; font-weight: 800; background: #0A84FF; color: white; border: none; cursor: pointer;">
+        <!-- Route Alternatives List -->
+        <div id="route-list" class="route-list" style="max-height: 160px; overflow-y: auto; margin-bottom: 12px;"></div>
+
+        <button id="btn-start-nav" class="btn-primary btn-large" style="width: 100%; padding: 15px; border-radius: 20px; font-size: 17px; font-weight: 800; background: #0A84FF; color: white; border: none; cursor: pointer;">
             Start Navigation
         </button>
     </div>
@@ -106,8 +118,6 @@
 <!-- SCREEN 3: NAVIGATION (GPS Active) -->
 <!-- ============================================================ -->
 <div id="screen-navigation" class="screen map-screen">
-    <!-- Map is always rendered in background -->
-
     <!-- Arrival Overlay -->
     <div id="arrival-overlay" class="arrival-overlay" style="display: none;">
         <div class="arrival-icon">🏁</div>
@@ -119,7 +129,7 @@
     <!-- Navigation Header (Turn-by-turn) -->
     <div class="nav-header">
         <div class="maneuver-panel">
-            <div id="maneuver-icon" class="maneuver-icon">↱</div>
+            <div id="maneuver-icon" class="maneuver-icon">↑</div>
             <div class="maneuver-text">
                 <div id="maneuver-instruction" class="maneuver-instruction">Follow the road</div>
                 <div id="nav-dest-name" class="nav-dest-name">Destination</div>
@@ -132,7 +142,7 @@
                 <span class="signal-bar"></span>
                 <span class="signal-bar"></span>
             </div>
-            <span class="signal-text">GPS</span>
+            <span class="signal-text" id="nav-signal-text">LIVE GPS</span>
         </div>
     </div>
 
@@ -159,7 +169,7 @@
             <span class="sensor-label">Gyro Z</span>
             <span id="hud-gz" class="sensor-val">0.00</span>
         </div>
-        <div class="sensor-source-badge">📱 IMU</div>
+        <div class="sensor-source-badge" id="hud-sensor-type">📱 IMU</div>
     </div>
 
     <!-- Unified Bottom Sheet -->
@@ -167,7 +177,7 @@
         <div class="bottom-metrics-grid">
             <div class="b-metric">
                 <div class="b-label" id="bm-1-lbl">Speed</div>
-                <div class="b-val" id="bm-1-val">-- km/h</div>
+                <div class="b-val" id="bm-1-val">0 km/h</div>
             </div>
             <div class="b-metric">
                 <div class="b-label" id="bm-2-lbl">Distance</div>
@@ -181,8 +191,8 @@
 
         <div class="bottom-mode-row">
             <div class="mode-info">
-                <div class="b-label">Mode</div>
-                <div class="mode-pill gps" id="current-mode-pill">Normal GPS</div>
+                <div class="b-label">GPS Status</div>
+                <div class="mode-pill gps" id="current-mode-pill">GPS WAITING</div>
             </div>
             <div class="conf-info" id="conf-info-container" style="display: none;">
                 <div class="b-label">Confidence</div>
@@ -190,9 +200,9 @@
             </div>
         </div>
 
-        <!-- Controls Row (for simulation purposes) -->
-        <div class="nav-controls" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
-            <div class="sim-speed-group">
+        <!-- Controls Row -->
+        <div class="nav-controls" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
+            <div class="sim-speed-group" id="sim-speed-wrapper">
                 <span class="sim-label">SIM</span>
                 <button class="sim-speed-btn active" data-speed="1">1×</button>
                 <button class="sim-speed-btn" data-speed="2">2×</button>
@@ -202,36 +212,20 @@
             <button id="btn-end-nav" class="btn-outline btn-sm">✕ End</button>
         </div>
     </div>
-
-    <!-- Satellite constellation mini (top right) -->
-    <div class="sat-mini-panel">
-        <div class="sat-mini-label">NavIC</div>
-        <div class="sat-bars">
-            <div class="sat-bar" style="height:70%"></div>
-            <div class="sat-bar" style="height:85%"></div>
-            <div class="sat-bar" style="height:60%"></div>
-            <div class="sat-bar" style="height:90%"></div>
-            <div class="sat-bar" style="height:75%"></div>
-            <div class="sat-bar" style="height:55%"></div>
-        </div>
-        <div class="sat-count">7 sats</div>
-    </div>
 </div>
 
 <!-- ============================================================ -->
 <!-- SCREEN 4: GPS LOST / INTELLIGENT DEAD RECKONING -->
 <!-- ============================================================ -->
 <div id="screen-dr" class="screen map-screen">
-    <!-- Map continues in background (DR vehicle continues moving) -->
-
     <!-- GPS Lost Banner -->
     <div class="gps-lost-banner" id="banner-gps-lost">
         <div class="gps-lost-icon-wrap">
             <span class="gps-lost-icon">📵</span>
         </div>
         <div class="gps-lost-text">
-            <div class="gps-lost-title">GPS Signal Lost</div>
-            <div class="gps-lost-sub">Switching to Intelligent Dead Reckoning...</div>
+            <div class="gps-lost-title" id="dr-banner-title">GPS Signal Lost</div>
+            <div class="gps-lost-sub" id="dr-banner-sub">Switching to Intelligent Dead Reckoning...</div>
         </div>
     </div>
     
@@ -241,7 +235,7 @@
         <span class="dr-status">ON</span>
     </div>
 
-    <!-- Diagnostics Panel (Screen 7) -->
+    <!-- Diagnostics Panel -->
     <div class="diagnostics-panel" id="diagnostics-panel" style="display: none;">
         <div class="diag-header">
             <div class="diag-icon">⚙️</div>
@@ -288,7 +282,7 @@
         
         <div class="diag-footer">
             <span class="diag-footer-icon">🔄</span>
-            Position Updated Every 0.5 sec
+            Bounded DR (Max 5 mins)
         </div>
     </div>
 </div>
@@ -299,10 +293,9 @@
 <div id="screen-recovery" class="screen">
     <div class="recovery-card">
         <div class="recovery-icon">✅</div>
-        <div class="recovery-title">NavIC Signal Restored</div>
+        <div class="recovery-title">GPS Signal Restored</div>
         <div class="recovery-sub">Realigning position from Dead Reckoning...</div>
 
-        <!-- Recovery animation bar -->
         <div class="recovery-progress-wrap">
             <div class="recovery-progress-bar" id="recovery-bar"></div>
         </div>
@@ -323,30 +316,44 @@
         </div>
 
         <div class="recovery-label-row">
-            <span class="dr-ai-label-chip">1D-CNN + GRU + EKF Dead Reckoning Complete</span>
+            <span class="dr-ai-label-chip">Authoritative Real GPS Active</span>
         </div>
     </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- SCREEN 6: DEBUG PANEL -->
+<!-- SCREEN 6: FIELD TEST DEBUG PANEL -->
 <!-- ============================================================ -->
 <div id="screen-debug" class="screen">
     <div class="debug-panel">
         <div class="screen-header">
             <button id="btn-debug-back" class="back-btn">←</button>
-            <span class="screen-title">Debug Telemetry</span>
+            <span class="screen-title">Field Test Telemetry</span>
         </div>
 
         <div class="debug-section">
-            <div class="debug-section-title">📡 GPS</div>
+            <div class="debug-section-title">📡 Real GPS Telemetry</div>
             <div class="debug-table">
+                <div class="debug-row"><span>GPS Status</span><span id="dbg-gps-status">—</span></div>
                 <div class="debug-row"><span>Latitude</span><span id="dbg-lat">—</span></div>
                 <div class="debug-row"><span>Longitude</span><span id="dbg-lng">—</span></div>
-                <div class="debug-row"><span>Speed</span><span id="dbg-speed">—</span></div>
+                <div class="debug-row"><span>Accuracy</span><span id="dbg-accuracy">—</span></div>
+                <div class="debug-row"><span>Raw GPS Speed</span><span id="dbg-raw-speed">—</span></div>
+                <div class="debug-row"><span>Calculated Speed</span><span id="dbg-calc-speed">—</span></div>
                 <div class="debug-row"><span>Heading</span><span id="dbg-heading">—</span></div>
+                <div class="debug-row"><span>Timestamp</span><span id="dbg-timestamp">—</span></div>
                 <div class="debug-row"><span>Source</span><span id="dbg-source">—</span></div>
-                <div class="debug-row"><span>GPS Status</span><span id="dbg-gps-status">—</span></div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <div class="debug-section-title">🗺️ Navigation & Route Telemetry</div>
+            <div class="debug-table">
+                <div class="debug-row"><span>Destination Coords</span><span id="dbg-dest-coords">—</span></div>
+                <div class="debug-row"><span>Route Distance</span><span id="dbg-route-dist">—</span></div>
+                <div class="debug-row"><span>Route Duration</span><span id="dbg-route-dur">—</span></div>
+                <div class="debug-row"><span>Route Deviation</span><span id="dbg-route-deviation">—</span></div>
+                <div class="debug-row"><span>Network Status</span><span id="dbg-network">—</span></div>
             </div>
         </div>
 
@@ -364,21 +371,12 @@
         </div>
 
         <div class="debug-section">
-            <div class="debug-section-title">🤖 Dead Reckoning</div>
+            <div class="debug-section-title">🤖 Dead Reckoning & AI</div>
             <div class="debug-table">
                 <div class="debug-row"><span>DR Active</span><span id="dbg-dr-active">—</span></div>
-                <div class="debug-row"><span>GPS Points Logged</span><span id="dbg-session-gps">0</span></div>
-                <div class="debug-row"><span>DR Points Logged</span><span id="dbg-session-dr">0</span></div>
-            </div>
-        </div>
-
-        <div class="debug-section">
-            <div class="debug-section-title">🧠 AI Model</div>
-            <div class="debug-table">
-                <div class="debug-row"><span>Architecture</span><span>GRU 2L × 32u</span></div>
-                <div class="debug-row"><span>Input Features</span><span>8 (ax,ay,az,gx,gy,gz,dt,v)</span></div>
-                <div class="debug-row"><span>Training Data</span><span class="sim-chip">IO-VNBD SIMULATED</span></div>
-                <div class="debug-row"><span>Outputs</span><span>Δspeed, Δheading</span></div>
+                <div class="debug-row"><span>Blackout Time</span><span id="dbg-blackout-time">0.0s</span></div>
+                <div class="debug-row"><span>Drift</span><span id="dbg-drift">0.0m</span></div>
+                <div class="debug-row"><span>AI Confidence</span><span id="dbg-ai-conf">—</span></div>
             </div>
         </div>
     </div>
@@ -459,7 +457,7 @@
         </div>
 
         <div class="results-footer">
-            <span class="ai-label-chip">AI Model: GRU 2L×32u · IO-VNBD Pre-trained (SIMULATED)</span>
+            <span class="ai-label-chip">AI Model: GRU 2L×32u · IO-VNBD</span>
         </div>
     </div>
 </div>
@@ -468,7 +466,7 @@
 <!-- LIBRARIES -->
 <!-- ============================================================ -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=2.1"></script>
+<script type="module" src="app.js?v=3.0"></script>
 
 </body>
 </html>

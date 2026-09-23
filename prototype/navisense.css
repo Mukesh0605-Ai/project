@@ -1244,3 +1244,154 @@ html, body {
 }
 
 .arrival-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; padding: 20px; } .arrival-icon { font-size: 64px; margin-bottom: 20px; } .arrival-title { font-size: 28px; font-weight: 800; margin-bottom: 8px; } .arrival-dest { font-size: 18px; color: #a1a1aa; margin-bottom: 30px; }
+
+/* ============================================================ */
+/* GPS STATE MACHINE BADGES */
+/* ============================================================ */
+.gps-badge.waiting { background: rgba(245, 158, 11, 0.18); color: #F59E0B; border: 1px solid #F59E0B; }
+.gps-badge.good { background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid #10B981; }
+.gps-badge.weak { background: rgba(234, 179, 8, 0.2); color: #EAB308; border: 1px solid #EAB308; }
+.gps-badge.lost { background: rgba(239, 68, 68, 0.25); color: #EF4444; border: 1px solid #EF4444; animation: blink-badge 1s infinite; }
+.gps-badge.recovering { background: rgba(14, 165, 233, 0.22); color: #38BDF8; border: 1px solid #38BDF8; }
+
+@keyframes blink-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+/* ============================================================ */
+/* NETWORK STATUS BADGE */
+/* ============================================================ */
+.net-badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 7px;
+    border-radius: 12px;
+}
+.net-badge.online {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+.net-badge.offline {
+    background: rgba(239, 68, 68, 0.22);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.45);
+}
+
+/* ============================================================ */
+/* "MY LOCATION" FLOATING ACTION BUTTON */
+/* ============================================================ */
+.fab-my-location {
+    position: fixed;
+    right: 18px;
+    bottom: 230px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(22, 27, 34, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    cursor: pointer;
+    z-index: 95;
+    transition: transform 0.15s ease, background 0.2s ease;
+}
+.fab-my-location:active {
+    transform: scale(0.92);
+    background: #0A84FF;
+}
+
+/* ============================================================ */
+/* SEARCH DROPDOWN & RESULTS */
+/* ============================================================ */
+.search-clear-btn {
+    background: none;
+    border: none;
+    color: var(--text2);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+.search-clear-btn:hover {
+    color: white;
+}
+.search-results-dropdown {
+    position: absolute;
+    top: 112px;
+    left: 16px;
+    right: 16px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: rgba(18, 22, 30, 0.98);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 20px;
+    z-index: 105;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75);
+}
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.search-result-item:last-child {
+    border-bottom: none;
+}
+.search-result-item:hover, .search-result-item:active {
+    background: rgba(255, 255, 255, 0.09);
+}
+.search-result-icon {
+    font-size: 20px;
+    min-width: 28px;
+    text-align: center;
+}
+.search-result-body {
+    flex: 1;
+    overflow: hidden;
+}
+.search-result-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #F1F5F9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.search-result-subtitle {
+    font-size: 11px;
+    color: #94A3B8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+.search-result-type-tag {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 8px;
+    background: rgba(10, 132, 255, 0.2);
+    color: #5BA4FF;
+    border: 1px solid rgba(10, 132, 255, 0.4);
+    text-transform: uppercase;
+}
+.search-state-msg {
+    padding: 16px;
+    text-align: center;
+    color: var(--text2);
+    font-size: 13px;
+}
+
