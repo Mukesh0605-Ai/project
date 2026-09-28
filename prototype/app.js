@@ -353,6 +353,7 @@ function tick(dt) {
         S.drLng = newLng;
         S.drSpeed = newSpeed;
         S.drHeading = newHeading;
+        S.currentHeading = newHeading;
         S.drDrift = 0.5 * 0.08 * S.blackoutSeconds * S.blackoutSeconds;
         S.drConfidence = Math.max(0.20, aiOut.confidence * Math.max(0.25, 1 - S.blackoutSeconds / 120));
         if (S.drDrift > S.maxDrift) S.maxDrift = S.drDrift;
@@ -652,7 +653,9 @@ function updateNavHUD(lat, lng, coords) {
     T('hud-sensor-type', imu.isReal ? '📱 Device IMU' : '📊 IO-VNBD');
 }
 
+let lastDiagStreamUpdate = 0;
 function updateDRHud(imu) {
+    const now = performance.now();
     const dur = (Date.now() - S.outageStartTime) / 1000;
     const conf = Math.round(S.drConfidence * 100);
     const rem = remainingDistance(S.drLat, S.drLng, S.route ? S.route.coords : []);
@@ -675,11 +678,14 @@ function updateDRHud(imu) {
     // Dynamic Active Sensor Calculation Status & Stream Numbers
     T('hud-sensor-type', '⚡ Accel + Gyro (DR Active)');
 
-    // Live Numbers Stream for Diagnostics Panel
-    T('diag-imu-stream', `ax:${imu.ax >= 0 ? '+' : ''}${imu.ax.toFixed(2)} | ay:${imu.ay >= 0 ? '+' : ''}${imu.ay.toFixed(2)} | gz:${imu.gz >= 0 ? '+' : ''}${imu.gz.toFixed(2)}`);
-    T('diag-ai-stream', `v_pred:${Math.round(S.drSpeed)}km/h | conf:${conf}% | Δv:${((imu.ax || 0.1) * 0.1).toFixed(2)}m/s`);
-    T('diag-ekf-stream', `drift:${S.drDrift.toFixed(2)}m | t:${dur.toFixed(1)}s | σ:${(1 - S.drConfidence).toFixed(2)}`);
-    T('diag-map-stream', `snap: seg #${S.routeIdx + 1}/${S.route ? S.route.coords.length : 1} | dist:${fmtDist(rem)}`);
+    // Throttle DOM text updates to ~10Hz (every 100ms) to eliminate high-frequency layout reflow flicker
+    if (now - lastDiagStreamUpdate > 100) {
+        lastDiagStreamUpdate = now;
+        T('diag-imu-stream', `ax:${imu.ax >= 0 ? '+' : ''}${imu.ax.toFixed(2)} | ay:${imu.ay >= 0 ? '+' : ''}${imu.ay.toFixed(2)} | gz:${imu.gz >= 0 ? '+' : ''}${imu.gz.toFixed(2)}`);
+        T('diag-ai-stream', `v_pred:${Math.round(S.drSpeed)}km/h | conf:${conf}% | Δv:${((imu.ax || 0.1) * 0.1).toFixed(2)}m/s`);
+        T('diag-ekf-stream', `drift:${S.drDrift.toFixed(2)}m | t:${dur.toFixed(1)}s | σ:${(1 - S.drConfidence).toFixed(2)}`);
+        T('diag-map-stream', `snap: seg #${S.routeIdx + 1}/${S.route ? S.route.coords.length : 1} | dist:${fmtDist(rem)}`);
+    }
 
     updateNavHUD(S.drLat, S.drLng, S.route ? S.route.coords : []);
 }
