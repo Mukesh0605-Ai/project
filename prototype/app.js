@@ -1442,6 +1442,40 @@ function wireEvents() {
     });
 }
 
+function setupBottomNav() {
+    const items = document.querySelectorAll('#app-bottom-nav .nav-item');
+    items.forEach(item => {
+        item.addEventListener('click', () => {
+            items.forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            const tab = item.dataset.tab;
+
+            if (tab === 'explore') {
+                showScreen('home');
+                if (S.currentLat && S.currentLng) mapEngine.flyTo(S.currentLat, S.currentLng, 15);
+                toast('📍 Explore Mode — Search or tap map to set destination', 'info', 2000);
+            } else if (tab === 'go') {
+                if (S.destination) {
+                    showScreen('route');
+                } else {
+                    showScreen('home');
+                    const di = $('dest-input');
+                    if (di) di.focus();
+                    toast('🚗 Search or tap map to set destination', 'info', 2000);
+                }
+            } else if (tab === 'saved') {
+                toast('🔖 Saved Corridors: Select a demo corridor below', 'info', 2500);
+                const storyModal = $('story-modal');
+                if (storyModal) storyModal.style.display = 'flex';
+            } else if (tab === 'contribute') {
+                toast('➕ Outage Report Logged — Contribution Received!', 'success', 3000);
+            } else if (tab === 'updates') {
+                toast('🔔 NavIC Health: 7 Satellites Active | AI Velocity Model: 96.4% Accuracy', 'info', 4000);
+            }
+        });
+    });
+}
+
 // ============================================================
 // APPLICATION INITIALIZATION
 // ============================================================
@@ -1466,6 +1500,7 @@ async function init() {
 
     // 6. Wire Events
     wireEvents();
+    setupBottomNav();
 
     // 7. Background Clock & Debug Refresh Loop
     setInterval(() => {

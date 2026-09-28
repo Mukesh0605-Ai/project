@@ -59,8 +59,8 @@ export class MapEngine {
 
     _createVehicleIcon(heading = 0, mode = 'GPS') {
         const isDR = mode === 'DR';
-        const color = isDR ? '#F59E0B' : mode === 'RECOVERY' ? '#10B981' : '#1A73E8';
-        const opacity = isDR ? '0.85' : '1.0';
+        const color = '#1A73E8'; // Always Blue for active driving vehicle
+        const opacity = '1.0';
 
         const carSvg = `
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(${heading}deg); transition: transform 0.15s ease; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7));">
@@ -71,7 +71,7 @@ export class MapEngine {
 
         return L.divIcon({
             className: '',
-            html: `<div class="vehicle-puck ${isDR ? 'dr-ghost-puck' : ''}" style="--puck-color:${color}; opacity:${opacity}">
+            html: `<div class="vehicle-puck" style="--puck-color:${color}; opacity:${opacity}">
                      <div class="puck-radar"></div>
                      <div class="car-puck-body">${carSvg}</div>
                    </div>`,
