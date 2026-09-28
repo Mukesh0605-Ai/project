@@ -55,6 +55,7 @@ const S = {
 
     // Dead Reckoning State (IMU + AI + EKF)
     drLat: 0, drLng: 0,
+    outageLat: 0, outageLng: 0,
     drSpeed: 0, drHeading: 0,
     drConfidence: 0.95,
     drDrift: 0,
@@ -286,6 +287,11 @@ function tick(dt) {
         displayLng = S.drLngAtRecovery + (S.gpsLngAtRecovery - S.drLngAtRecovery) * eased;
         displayMode = 'RECOVERY';
 
+        // Animate transparent outage pin sliding from outageLat to join active vehicle at displayLat
+        const lossLat = S.outageLat + (displayLat - S.outageLat) * eased;
+        const lossLng = S.outageLng + (displayLng - S.outageLng) * eased;
+        mapEngine.updateGpsLossMarkerPos(lossLat, lossLng, 1 - eased);
+
         S.drConfidence = 0.4 + eased * 0.55;
 
         if (t >= 1) {
@@ -508,9 +514,12 @@ function triggerGPSLoss() {
     S.blackoutSeconds = 0;
     datasetIdx = 0;
 
-    // Preserve authoritative last confirmed GPS position, speed, and heading (or default to smooth demo speed)
-    S.drLat = S.currentLat || (S.route && S.route.coords[0] ? S.route.coords[0].lat : 20.5937);
-    S.drLng = S.currentLng || (S.route && S.route.coords[0] ? S.route.coords[0].lng : 78.9629);
+    // Preserve authoritative last confirmed GPS position where signal died
+    S.outageLat = S.currentLat || (S.route && S.route.coords[0] ? S.route.coords[0].lat : 20.5937);
+    S.outageLng = S.currentLng || (S.route && S.route.coords[0] ? S.route.coords[0].lng : 78.9629);
+
+    S.drLat = S.outageLat;
+    S.drLng = S.outageLng;
     S.drSpeed = (S.currentSpeed && S.currentSpeed > 10) ? S.currentSpeed : 45;
     S.drHeading = S.currentHeading || 0;
     S.drConfidence = 0.95;
@@ -534,8 +543,8 @@ function triggerGPSLoss() {
         }
     }, 100);
 
-    // Show stationary transparent GPS Loss car pin at exact outage point
-    mapEngine.showGpsLossMarker(S.drLat, S.drLng, S.drHeading);
+    // Show stationary transparent GPS Loss car pin STAYING FIXED at exact outage point
+    mapEngine.showGpsLossMarker(S.outageLat, S.outageLng, S.drHeading);
 
     // Show banner, DR badge & sensor diagnostics panel on active navigation screen
     const banner = $('banner-gps-lost');
@@ -567,17 +576,17 @@ function triggerGPSRecovery() {
     clearInterval(S.blackoutTimerId);
     S.blackoutTimerId = null;
 
-    const finalDrift = haversine(S.drLat, S.drLng, S.currentLat || S.drLat, S.currentLng || S.drLng);
-    const dur = (Date.now() - S.outageStartTime) / 1000;
-
-    // Real GPS becomes authoritative immediately
-    S.isRecovering = true;
-    S.recoveryStartTime = Date.now();
+    // Position of active car when GPS is restored
     S.drLatAtRecovery = S.drLat;
     S.drLngAtRecovery = S.drLng;
 
-    S.gpsLatAtRecovery = S.currentLat;
-    S.gpsLngAtRecovery = S.currentLng;
+    // Restored satellite GPS position (current position along route)
+    const pt = getRoutePosition(S.route ? S.route.coords : []);
+    S.gpsLatAtRecovery = (S.currentLat && Math.abs(S.currentLat - S.drLat) < 0.1) ? S.currentLat : pt.lat;
+    S.gpsLngAtRecovery = (S.currentLng && Math.abs(S.currentLng - S.drLng) < 0.1) ? S.currentLng : pt.lng;
+
+    S.isRecovering = true;
+    S.recoveryStartTime = Date.now();
 
     // Update banner for recovery mode
     const banner = $('banner-gps-lost');

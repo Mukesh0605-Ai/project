@@ -107,6 +107,15 @@ export class MapEngine {
         }
     }
 
+    updateGpsLossMarkerPos(lat, lng, opacity = 1.0) {
+        if (!this.gpsLossMarker) return;
+        this.gpsLossMarker.setLatLng([lat, lng]);
+        const el = this.gpsLossMarker.getElement();
+        if (el) {
+            el.style.opacity = Math.max(0, Math.min(1, opacity)).toFixed(2);
+        }
+    }
+
     clearGpsLossMarker() {
         if (this.gpsLossMarker) {
             this.map.removeLayer(this.gpsLossMarker);
