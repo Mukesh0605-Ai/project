@@ -672,8 +672,14 @@ function updateDRHud(imu) {
     if (confContainer) confContainer.style.display = 'flex';
     T('bm-conf-val', `${conf}%`);
 
-    // Dynamic Active Sensor Calculation Status
+    // Dynamic Active Sensor Calculation Status & Stream Numbers
     T('hud-sensor-type', '⚡ Accel + Gyro (DR Active)');
+
+    // Live Numbers Stream for Diagnostics Panel
+    T('diag-imu-stream', `ax:${imu.ax >= 0 ? '+' : ''}${imu.ax.toFixed(2)} | ay:${imu.ay >= 0 ? '+' : ''}${imu.ay.toFixed(2)} | gz:${imu.gz >= 0 ? '+' : ''}${imu.gz.toFixed(2)}`);
+    T('diag-ai-stream', `v_pred:${Math.round(S.drSpeed)}km/h | conf:${conf}% | Δv:${((imu.ax || 0.1) * 0.1).toFixed(2)}m/s`);
+    T('diag-ekf-stream', `drift:${S.drDrift.toFixed(2)}m | t:${dur.toFixed(1)}s | σ:${(1 - S.drConfidence).toFixed(2)}`);
+    T('diag-map-stream', `snap: seg #${S.routeIdx + 1}/${S.route ? S.route.coords.length : 1} | dist:${fmtDist(rem)}`);
 
     updateNavHUD(S.drLat, S.drLng, S.route ? S.route.coords : []);
 }
@@ -770,13 +776,17 @@ function drawResultsChart() {
 // ============================================================
 function onGPSUpdate(pos) {
     S.gpsIsLive = true;
-    S.currentLat = pos.lat;
-    S.currentLng = pos.lng;
-    S.currentSpeed = pos.speed || 0;
-    S.currentRawSpeed = pos.rawSpeed || 0;
-    S.currentHeading = pos.bearing || 0;
+    S.currentRawSpeed = pos.speed || 0;
     S.currentAccuracy = pos.accuracy || 5;
     S.lastGPSTimestamp = pos.ts || Date.now();
+
+    // Update authoritative lat/lng if not navigating or if real physical motion (> 5 km/h) occurs
+    if (!S.isNavigating || (pos.speed && pos.speed >= 5)) {
+        S.currentLat = pos.lat;
+        S.currentLng = pos.lng;
+        S.currentSpeed = pos.speed || 0;
+        S.currentHeading = pos.bearing || 0;
+    }
 
     // FIRST GPS FIX
     if (!S._hasFlownToGPS) {
@@ -1045,6 +1055,7 @@ function startNavigation() {
     mapEngine.setRoute(S.route.coords);
     mapEngine.clearPath();
     mapEngine.setMarkers(S.origin, S.destination);
+    mapEngine.invalidateSize();
     mapEngine.flyTo(S.currentLat, S.currentLng, 18);
     mapEngine.setFollowCamera(true);
 

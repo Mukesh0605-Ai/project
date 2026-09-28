@@ -49,11 +49,6 @@ export class MapEngine {
             lineJoin: 'round', dashArray: '8, 4'
         }).addTo(this.map);
 
-        // Disable follow camera if user drags map manually
-        this.map.on('dragstart', () => {
-            this.followCamera = false;
-        });
-
         this.isInitialized = true;
         return this.map;
     }
@@ -152,9 +147,9 @@ export class MapEngine {
             }
         }
 
-        // Camera follow only if active navigation has followCamera enabled
+        // Camera follow — always follow during active navigation (works smoothly on mobile & desktop)
         if (this.followCamera) {
-            const navZoom = Math.max(17, this.map.getZoom());
+            const navZoom = Math.max(17, this.map.getZoom() || 17);
             this.map.setView(latlng, navZoom, { animate: false });
         }
 

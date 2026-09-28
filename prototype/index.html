@@ -234,38 +234,38 @@
             <div class="diag-item">
                 <div class="diag-item-icon">💡</div>
                 <div class="diag-item-text">
-                    <div class="diag-item-title">IMU Data</div>
-                    <div class="diag-item-sub">(Accelerometer + Gyro)</div>
+                    <div class="diag-item-title">IMU Data Stream</div>
+                    <div class="diag-item-sub" id="diag-imu-stream">ax: 0.00 | ay: 0.00 | gz: 0.00</div>
                 </div>
-                <div class="diag-item-status">✅</div>
+                <div class="diag-item-status" id="diag-imu-status"><span class="calc-pulse">⚡</span> CALC</div>
             </div>
             <div class="diag-item">
                 <div class="diag-item-icon">🧠</div>
                 <div class="diag-item-text">
-                    <div class="diag-item-title">AI Model</div>
-                    <div class="diag-item-sub">(Velocity Estimation)</div>
+                    <div class="diag-item-title">AI Velocity Model</div>
+                    <div class="diag-item-sub" id="diag-ai-stream">v_est: 45 km/h | conf: 95%</div>
                 </div>
-                <div class="diag-item-status">✅</div>
+                <div class="diag-item-status" id="diag-ai-status"><span class="calc-pulse">⚡</span> CALC</div>
             </div>
             <div class="diag-item">
                 <div class="diag-item-icon">📍</div>
                 <div class="diag-item-text">
-                    <div class="diag-item-title">EKF / DR</div>
-                    <div class="diag-item-sub">(State Estimation)</div>
+                    <div class="diag-item-title">EKF State Fusion</div>
+                    <div class="diag-item-sub" id="diag-ekf-stream">drift: 0.00m | t: 0.0s</div>
                 </div>
-                <div class="diag-item-status">✅</div>
+                <div class="diag-item-status" id="diag-ekf-status"><span class="calc-pulse">⚡</span> CALC</div>
             </div>
             <div class="diag-item">
                 <div class="diag-item-icon">🗺️</div>
                 <div class="diag-item-text">
                     <div class="diag-item-title">Map Matching</div>
-                    <div class="diag-item-sub">(Road Constraint)</div>
+                    <div class="diag-item-sub" id="diag-map-stream">snap: road segment #1</div>
                 </div>
-                <div class="diag-item-status">✅</div>
+                <div class="diag-item-status" id="diag-map-status"><span class="calc-pulse">⚡</span> CALC</div>
             </div>
         </div>
         <div class="diag-footer">
-            <span class="diag-footer-icon">🔄</span> Bounded DR (Max 5 mins)
+            <span class="diag-footer-icon">🔄</span> <span id="diag-footer-text">Bounded DR Active (Max 5 mins) — Live Telemetry Streaming</span>
         </div>
     </div>
 
