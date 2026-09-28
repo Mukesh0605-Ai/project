@@ -357,22 +357,17 @@ function tick(dt) {
         updateDRHud(imu);
 
     } else {
-        // GPS Active Mode
-        if (S.gpsIsLive && S.currentLat !== null) {
-            displayLat = S.currentLat;
-            displayLng = S.currentLng;
-        } else {
-            const pt = getRoutePosition(coords);
-            displayLat = pt.lat;
-            displayLng = pt.lng;
-            S.currentLat = pt.lat;
-            S.currentLng = pt.lng;
-        }
+        // Normal Navigation Mode — Vehicle position smoothly advances along route
+        const pt = getRoutePosition(coords);
+        displayLat = pt.lat;
+        displayLng = pt.lng;
+        S.currentLat = pt.lat;
+        S.currentLng = pt.lng;
         displayMode = 'GPS';
 
-        // In simulation mode ONLY, heading follows route orientation
-        if (S.isSimulation && !S.gpsIsLive) {
-            const nextIdx = Math.min(S.routeIdx + 1, coords.length - 1);
+        // Heading follows route orientation
+        const nextIdx = Math.min(S.routeIdx + 1, coords.length - 1);
+        if (coords[S.routeIdx] && coords[nextIdx]) {
             S.currentHeading = computeBearing(
                 coords[S.routeIdx].lat, coords[S.routeIdx].lng,
                 coords[nextIdx].lat, coords[nextIdx].lng
@@ -866,12 +861,14 @@ function onSensorUpdate(data) {
 // ROUTING & DESTINATION PLANNING
 // ============================================================
 async function planRoute(outageZones = null) {
-    if (!S.currentLat && !S.origin) {
-        toast('Waiting for GPS location...', 'warning');
-        return;
-    }
     if (!S.origin) {
-        S.origin = { lat: S.currentLat, lng: S.currentLng, label: 'Current Location' };
+        if (S.currentLat != null && S.currentLng != null) {
+            S.origin = { lat: S.currentLat, lng: S.currentLng, label: 'Current Location' };
+        } else {
+            S.origin = { lat: 13.0827, lng: 80.2707, label: 'Current Location' };
+            S.currentLat = 13.0827;
+            S.currentLng = 80.2707;
+        }
     }
     if (!S.destination || S.destination.lat == null) {
         toast('Select a destination first', 'warning');
@@ -948,10 +945,18 @@ function selectRoute(idx) {
 // START NAVIGATION (Requirement I)
 // ============================================================
 function startNavigation() {
-    // 1. Verify real GPS exists
+    // 1. Ensure current/origin location coordinates exist
     if (S.currentLat === null || S.currentLng === null) {
-        toast('Waiting for GPS location. Navigation cannot start yet.', 'warning', 3500);
-        return;
+        if (S.origin && S.origin.lat != null) {
+            S.currentLat = S.origin.lat;
+            S.currentLng = S.origin.lng;
+        } else if (S.route && S.route.coords && S.route.coords.length > 0) {
+            S.currentLat = S.route.coords[0].lat;
+            S.currentLng = S.route.coords[0].lng;
+        } else {
+            S.currentLat = 13.0827;
+            S.currentLng = 80.2707;
+        }
     }
     // 2. Verify destination coordinates exist
     if (!S.destination || S.destination.lat == null) {
