@@ -1608,8 +1608,8 @@ html, body {
 /* ============================================================ */
 .gps-loss-drop-marker {
     position: relative;
-    width: 40px;
-    height: 50px;
+    width: 44px;
+    height: 54px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1618,27 +1618,27 @@ html, body {
 .gps-loss-ping {
     position: absolute;
     top: 5px;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    border: 2px solid #EF4444;
-    background: rgba(239, 68, 68, 0.35);
+    border: 2px solid #F59E0B;
+    background: rgba(245, 158, 11, 0.4);
     animation: gps-loss-ping 1.5s ease-out infinite;
 }
 @keyframes gps-loss-ping {
     0% { transform: scale(0.6); opacity: 0.9; }
-    100% { transform: scale(2.0); opacity: 0; }
+    100% { transform: scale(2.2); opacity: 0; }
 }
 .gps-loss-pin {
-    font-size: 24px;
+    font-size: 26px;
     z-index: 2;
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7));
 }
 .gps-loss-label {
     font-size: 9px;
     font-weight: 800;
-    color: white;
-    background: #EF4444;
+    color: #0B0E14;
+    background: #F59E0B;
     padding: 2px 6px;
     border-radius: 6px;
     letter-spacing: 0.5px;
