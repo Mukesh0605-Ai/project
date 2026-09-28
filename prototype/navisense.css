@@ -1665,5 +1665,74 @@ html, body {
     transition: transform 0.15s ease;
 }
 
+/* ============================================================ */
+/* MOBILE RESPONSIVE OPTIMIZATIONS (Smartphones) */
+/* ============================================================ */
+@media (max-width: 640px) {
+    .diagnostics-panel {
+        position: absolute;
+        top: auto;
+        bottom: 140px;
+        left: 14px;
+        right: 14px;
+        width: auto;
+        padding: 10px 12px;
+        border-radius: 16px;
+        z-index: 350;
+        background: rgba(15, 23, 42, 0.94);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    }
+    .diag-header {
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+    }
+    .diag-title {
+        font-size: 12px;
+    }
+    .diag-sub {
+        font-size: 9px;
+    }
+    .diag-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+    .diag-item {
+        padding: 4px 8px;
+        font-size: 10px;
+        border-radius: 8px;
+    }
+    .diag-footer {
+        font-size: 9px;
+        padding-top: 4px;
+    }
+    .gps-lost-banner {
+        top: 50px;
+        left: 12px;
+        right: 12px;
+        padding: 8px 12px;
+        border-radius: 14px;
+    }
+    .gps-lost-title {
+        font-size: 13px;
+    }
+    .gps-lost-sub {
+        font-size: 10px;
+    }
+    .dr-floating-badge {
+        top: 100px;
+        right: 12px;
+        padding: 4px 10px;
+    }
+    .sensor-hud {
+        top: 100px;
+        right: 12px;
+        padding: 6px 10px;
+    }
+}
+
 
 

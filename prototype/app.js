@@ -672,6 +672,9 @@ function updateDRHud(imu) {
     if (confContainer) confContainer.style.display = 'flex';
     T('bm-conf-val', `${conf}%`);
 
+    // Dynamic Active Sensor Calculation Status
+    T('hud-sensor-type', '⚡ Accel + Gyro (DR Active)');
+
     updateNavHUD(S.drLat, S.drLng, S.route ? S.route.coords : []);
 }
 
