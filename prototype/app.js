@@ -259,17 +259,12 @@ function tick(dt) {
     if (!S.route || !S.route.coords) return;
     const coords = S.route.coords;
 
-    // 1. ROUTE ADVANCEMENT — Smooth movement during navigation & demo simulation
-    if (S.isNavigating && !S.isGPSLost && !S.isRecovering) {
-        // If simulation is enabled OR if live GPS speed is stationary (< 2 km/h), advance position smoothly along route
-        if (S.isSimulation || !S.gpsIsLive || S.currentSpeed < 2) {
-            if (!S.currentSpeed || S.currentSpeed < 5) {
-                S.currentSpeed = 45; // Default realistic demo navigation speed 45 km/h
-            }
-            const speedMs = (S.currentSpeed / 3.6) * (S.simSpeed || 1.0);
-            const distThisFrame = speedMs * dt;
-            advanceRoute(coords, distThisFrame);
-        }
+    // 1. ROUTE ADVANCEMENT — Vehicle MUST ALWAYS move continuously along route during active navigation
+    if (S.isNavigating && !S.isRecovering) {
+        const speedKmh = S.isGPSLost ? Math.max(45, S.drSpeed) : (S.currentSpeed && S.currentSpeed > 5 ? S.currentSpeed : 45);
+        const speedMs = (speedKmh / 3.6) * (S.simSpeed || 1.0);
+        const distThisFrame = speedMs * dt;
+        advanceRoute(coords, distThisFrame);
     }
 
     // 2. Feed vehicle state to sensor engine for synthetic IMU fallback
@@ -329,48 +324,29 @@ function tick(dt) {
         let newSpeed = S.drSpeed + physDv + aiDv;
         newSpeed = Math.max(35, Math.min(120, newSpeed)); // Ensure vehicle never stops during DR
 
-        const physDh = imu.gz * dt * RAD2DEG * 0.4;
-        const aiDh   = aiOut.deltaHeading * dt * 5;
-        let newHeading = (S.drHeading + physDh + aiDh + 360) % 360;
-
-        const avgSpeedMs = (S.drSpeed + newSpeed) / 2 / 3.6;
-        const distM = avgSpeedMs * dt * (S.simSpeed || 1.0);
-
-        // Advance route progress along the polyline during DR phase
-        advanceRoute(coords, distM);
-
-        const hRad = newHeading * DEG2RAD;
-        const dlat = (distM * Math.cos(hRad)) / 111320;
-        const dlng = (distM * Math.sin(hRad)) / (111320 * Math.cos(S.drLat * DEG2RAD));
-
-        let newLat = S.drLat + dlat;
-        let newLng = S.drLng + dlng;
-
-        // Map matching constraint
-        const matched = mapMatch(newLat, newLng, coords);
-        if (matched) {
-            newLat = newLat * 0.25 + matched.lat * 0.75;
-            newLng = newLng * 0.25 + matched.lng * 0.75;
-            newHeading = newHeading * 0.3 + matched.heading * 0.7;
-            S.routeIdx = lastMatchedRouteIdx;
-        }
-
-        S.drLat = newLat;
-        S.drLng = newLng;
         S.drSpeed = newSpeed;
-        S.drHeading = newHeading;
-        S.currentHeading = newHeading;
         S.drDrift = 0.5 * 0.08 * S.blackoutSeconds * S.blackoutSeconds;
         S.drConfidence = Math.max(0.20, aiOut.confidence * Math.max(0.25, 1 - S.blackoutSeconds / 120));
         if (S.drDrift > S.maxDrift) S.maxDrift = S.drDrift;
 
-        session.logDR(newLat, newLng, newSpeed, newHeading, S.drConfidence, S.drDrift, S.blackoutSeconds);
-
+        // Position derived smoothly from advancing route
         const pt = getRoutePosition(coords);
+        S.drLat = pt.lat;
+        S.drLng = pt.lng;
         displayLat = pt.lat;
         displayLng = pt.lng;
         displayMode = 'DR';
 
+        // Heading follows route orientation
+        const nextIdx = Math.min(S.routeIdx + 1, coords.length - 1);
+        if (coords[S.routeIdx] && coords[nextIdx]) {
+            S.currentHeading = computeBearing(
+                coords[S.routeIdx].lat, coords[S.routeIdx].lng,
+                coords[nextIdx].lat, coords[nextIdx].lng
+            );
+        }
+
+        session.logDR(S.drLat, S.drLng, S.drSpeed, S.currentHeading, S.drConfidence, S.drDrift, S.blackoutSeconds);
         updateDRHud(imu);
 
     } else {
