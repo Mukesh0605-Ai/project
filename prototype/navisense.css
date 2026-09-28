@@ -1395,3 +1395,111 @@ html, body {
     font-size: 13px;
 }
 
+/* ============================================================ */
+/* DR FLOATING BADGE & DIAGNOSTICS PANEL */
+/* ============================================================ */
+.dr-floating-badge {
+    position: absolute;
+    top: 140px;
+    right: 16px;
+    background: rgba(239, 68, 68, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 250;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+.dr-floating-badge .dr-text {
+    font-weight: 900;
+    font-size: 12px;
+    color: white;
+}
+.dr-floating-badge .dr-status {
+    font-weight: 800;
+    font-size: 10px;
+    background: white;
+    color: #EF4444;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.diagnostics-panel {
+    position: absolute;
+    top: 185px;
+    right: 16px;
+    width: 270px;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 16px;
+    z-index: 300;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65);
+}
+.diag-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+}
+.diag-icon { font-size: 20px; }
+.diag-title-wrap { flex: 1; }
+.diag-title { font-size: 13px; font-weight: 800; color: white; }
+.diag-sub { font-size: 10px; color: var(--text2); }
+.diag-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.diag-item { display: flex; align-items: center; gap: 8px; font-size: 11px; background: rgba(255, 255, 255, 0.04); padding: 8px 10px; border-radius: 12px; }
+.diag-item-icon { font-size: 14px; }
+.diag-item-text { flex: 1; }
+.diag-item-title { font-weight: 700; color: white; }
+.diag-item-sub { font-size: 9px; color: var(--text2); }
+.diag-item-status { font-size: 12px; }
+.diag-footer { font-size: 10px; color: var(--text2); text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 8px; }
+
+.gps-lost-banner {
+    position: absolute;
+    top: 56px;
+    left: 16px;
+    right: 16px;
+    background: rgba(239, 68, 68, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 200;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+}
+.gps-lost-icon-wrap { font-size: 24px; }
+.gps-lost-text { flex: 1; }
+.gps-lost-title { font-weight: 800; font-size: 15px; color: white; }
+.gps-lost-sub { font-size: 11px; color: rgba(255, 255, 255, 0.85); }
+
+.arrival-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(11, 14, 20, 0.92);
+    backdrop-filter: blur(20px);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+}
+.arrival-icon { font-size: 64px; margin-bottom: 16px; }
+.arrival-title { font-size: 28px; font-weight: 900; color: #34C759; margin-bottom: 8px; }
+.arrival-dest { font-size: 16px; color: var(--text2); margin-bottom: 24px; }
+
+

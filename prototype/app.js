@@ -258,12 +258,17 @@ function tick(dt) {
     if (!S.route || !S.route.coords) return;
     const coords = S.route.coords;
 
-    // 1. ROUTE ADVANCEMENT — STRICTLY FOR DEMO SIMULATION MODE ONLY
-    // When live GPS is active (S.gpsIsLive === true and !S.isSimulation), advanceRoute() MUST NOT execute!
-    if (S.isSimulation && !S.gpsIsLive) {
-        const speedMs = (S.currentSpeed / 3.6) * S.simSpeed;
-        const distThisFrame = speedMs * dt;
-        advanceRoute(coords, distThisFrame);
+    // 1. ROUTE ADVANCEMENT — Smooth movement during navigation & demo simulation
+    if (S.isNavigating && !S.isGPSLost && !S.isRecovering) {
+        // If simulation is enabled OR if live GPS speed is stationary (< 2 km/h), advance position smoothly along route
+        if (S.isSimulation || !S.gpsIsLive || S.currentSpeed < 2) {
+            if (!S.currentSpeed || S.currentSpeed < 5) {
+                S.currentSpeed = 45; // Default realistic demo navigation speed 45 km/h
+            }
+            const speedMs = (S.currentSpeed / 3.6) * (S.simSpeed || 1.0);
+            const distThisFrame = speedMs * dt;
+            advanceRoute(coords, distThisFrame);
+        }
     }
 
     // 2. Feed vehicle state to sensor engine for synthetic IMU fallback
@@ -958,7 +963,12 @@ function startNavigation() {
 
     // Reset navigation state
     S.isNavigating = true;
-    S.isSimulation = false;
+    if (!S.gpsIsLive || S.currentSpeed < 2) {
+        S.isSimulation = true;
+        if (!S.currentSpeed || S.currentSpeed < 5) {
+            S.currentSpeed = 45;
+        }
+    }
     S.isGPSLost = false;
     S.isRecovering = false;
     S.isArrived = false;
