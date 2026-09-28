@@ -66,11 +66,19 @@ export class MapEngine {
         const isDR = mode === 'DR';
         const color = isDR ? '#F59E0B' : mode === 'RECOVERY' ? '#10B981' : '#1A73E8';
         const opacity = isDR ? '0.85' : '1.0';
+
+        const carSvg = `
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(${heading}deg); transition: transform 0.15s ease; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7));">
+            <path d="M12 2L17 7V17C17 18.1 16.1 19 15 19H9C7.9 19 7 18.1 7 17V7L12 2Z" fill="${color}" stroke="#FFFFFF" stroke-width="1.8"/>
+            <path d="M9 6H15M9 10H15M10 14H14" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="12" cy="16.5" r="1.5" fill="white"/>
+        </svg>`;
+
         return L.divIcon({
             className: '',
             html: `<div class="vehicle-puck ${isDR ? 'dr-ghost-puck' : ''}" style="--puck-color:${color}; opacity:${opacity}">
                      <div class="puck-radar"></div>
-                     <div class="car-puck-body" style="transform:rotate(${heading}deg);">🚗</div>
+                     <div class="car-puck-body">${carSvg}</div>
                    </div>`,
             iconSize: [52, 52],
             iconAnchor: [26, 26]
@@ -79,13 +87,20 @@ export class MapEngine {
 
     showGpsLossMarker(lat, lng, heading = 0) {
         if (!this.isInitialized || lat == null || lng == null) return;
+
+        const carSvg = `
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(${heading}deg); opacity: 0.65; filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.9));">
+            <path d="M12 2L17 7V17C17 18.1 16.1 19 15 19H9C7.9 19 7 18.1 7 17V7L12 2Z" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1.8"/>
+            <path d="M9 6H15M9 10H15M10 14H14" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>`;
+
         if (!this.gpsLossMarker) {
             const icon = L.divIcon({
                 className: '',
                 html: `<div class="gps-loss-drop-marker" title="GPS Signal Died Here">
                          <div class="gps-loss-ping"></div>
-                         <div class="static-transparent-car" style="transform:rotate(${heading}deg);">🚗</div>
-                         <div class="gps-loss-label">GPS DIED HERE</div>
+                         <div class="static-transparent-car">${carSvg}</div>
+                         <div class="gps-loss-label">📍 GPS DIED HERE</div>
                        </div>`,
                 iconSize: [44, 54],
                 iconAnchor: [22, 27]

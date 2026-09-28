@@ -359,10 +359,9 @@ function tick(dt) {
 
         session.logDR(newLat, newLng, newSpeed, newHeading, S.drConfidence, S.drDrift, S.blackoutSeconds);
 
-        S.currentSpeed = newSpeed;
-        S.currentHeading = newHeading;
-        displayLat = newLat;
-        displayLng = newLng;
+        const pt = getRoutePosition(coords);
+        displayLat = pt.lat;
+        displayLng = pt.lng;
         displayMode = 'DR';
 
         updateDRHud(imu);
@@ -534,8 +533,8 @@ function triggerGPSLoss() {
         }
     }, 100);
 
-    // Show stationary GPS Loss pin at exact outage point
-    mapEngine.showGpsLossMarker(S.drLat, S.drLng);
+    // Show stationary transparent GPS Loss car pin at exact outage point
+    mapEngine.showGpsLossMarker(S.drLat, S.drLng, S.drHeading);
 
     // Show banner, DR badge & sensor diagnostics panel on active navigation screen
     const banner = $('banner-gps-lost');
