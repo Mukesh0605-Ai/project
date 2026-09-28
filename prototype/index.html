@@ -56,12 +56,98 @@
     <!-- Search Results Dropdown -->
     <div id="search-results" class="search-results-dropdown" style="display: none;"></div>
 
-    <!-- Home Bottom Sheet (Demo Corridors) -->
+    <!-- Home Bottom Sheet (Demo Corridors & Story Flow) -->
     <div class="home-bottom-sheet">
         <div class="sheet-handle"></div>
-        <div class="sheet-title">Demo Corridors (Simulation Only)</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div class="sheet-title">Demo Corridors (Simulation Only)</div>
+            <button id="btn-story-flow" class="btn-story-tag" style="background: rgba(16, 185, 129, 0.2); color: #34D399; border: 1px solid #10B981; border-radius: 12px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;">📖 Prototype கதை</button>
+        </div>
         <div class="sheet-subtitle">Select a corridor to test GNSS Blackout & Dead Reckoning</div>
         <div id="preset-buttons" class="preset-list"></div>
+    </div>
+
+    <!-- PROTOTYPE STORY FLOW MODAL (Tamil Concept Story) -->
+    <div id="story-modal" class="story-modal" style="display: none;">
+        <div class="story-modal-content">
+            <div class="story-modal-header">
+                <div class="story-modal-title">🚗 NAVISENSE-IDR — Prototype கதை</div>
+                <button id="btn-close-story" class="story-modal-close">✕</button>
+            </div>
+            <div class="story-subtitle-tag">நமது செயலி எப்படி 10 படிநிலைகளில் வேலை செய்கிறது:</div>
+            <div class="story-steps-container">
+                <div class="story-step-item">
+                    <div class="story-step-num">1</div>
+                    <div class="story-step-body">
+                        <div class="story-step-title">📍 தொடங்கும் இடம் & இலக்கு தேர்வு</div>
+                        <div class="story-step-desc">முதலில் பயனர் செயலியில் தொடங்கும் இடத்தையும், செல்ல வேண்டிய இடத்தையும் தேர்வு செய்கிறார்.</div>
+                    </div>
+                </div>
+                <div class="story-step-item">
+                    <div class="story-step-num">2</div>
+                    <div class="story-step-body">
+                        <div class="story-step-title">🚗 பயணம் தொடங்குதல்</div>
+                        <div class="story-step-desc">அதற்குப் பிறகு வாகனம் பயணத்தைத் தொடங்குகிறது.</div>
+                    </div>
+                </div>
+                <div class="story-step-item">
+                    <div class="story-step-num">3</div>
+                    <div class="story-step-body">
+                        <div class="story-step-title">🟢 GNSS இணைப்பு உள்ளது</div>
+                        <div class="story-step-desc">ஆரம்பத்தில் GNSS சமிக்ஞை சரியாகக் கிடைத்துக்கொண்டே இருக்கும். அதனால் வாகனத்தின் இருப்பிடம் வரைபடத்தில் சரியாகக் காட்டப்படும்.</div>
+                    </div>
+                </div>
+                <div class="story-step-item">
+                    <div class="story-step-num">4</div>
+                    <div class="story-step-body">
+                        <div class="story-step-title">🔴 சுரங்கப்பாதை & GNSS துண்டிப்பு</div>
+                        <div class="story-step-desc">வாகனம் ஒரு சுரங்கப்பாதைக்குள் செல்லும்போது திடீரென்று GNSS சமிக்ஞை துண்டிக்கப்படுகிறது. ஆனால் வாகனம் நின்றுவிடாது!</div>
+                    </div>
+                </div>
+                <div class="story-step-item">
+                    <div class="story-step-num">5</div>
+                    <div class="story-step-body">
+                        <div class="story-step-title">🧠 AI & IMU உணரிகள் செயல்படுதல்</div>
+                        <div class="story-step-desc">முடுக்கமானி (Accelerometer), சுழற்சி உணரி (Gyroscope) போன்ற IMU உணரிகளிலிருந்து வரும் தகவல்களை செயற்கை நுண்ணறிவு (AI) பகுப்பாய்வு செய்கிறது.</div>
+                    </div>
+                </div>
+                <div class="story-step-item">
+                    <div class="story-step-num">6</div>
+                    <div class="story-step-body">
+                        <div class="story-step-title">📍 இறந்த-கணிப்பு (Dead Reckoning)</div>
+                        <div class="story-step-desc">GNSS சமிக்ஞை இல்லையென்றாலும், வாகனம் இப்போது எங்கே இருக்கிறது என்பதை AI தொடர்ந்து கணித்து வரைபடத்தில் காட்டும்.</div>
+                    </div>
+                </div>
+                <div class="story-step-item">
+                    <div class="story-step-num">7</div>
+                    <div class="story-step-body">
+                        <div class="story-step-title">🗺️ வரைபடத் திருத்தம் (Map Matching & EKF)</div>
+                        <div class="story-step-desc">கணிக்கப்பட்ட பாதையை சாலை வரைபடம் மற்றும் வாகனத்தின் இயல்பான கட்டுப்பாடுகள் வைத்து சரிபார்த்து திருத்தும்.</div>
+                    </div>
+                </div>
+                <div class="story-step-item">
+                    <div class="story-step-num">8</div>
+                    <div class="story-step-body">
+                        <div class="story-step-title">🚗 தொடர்ந்து நகர்தல்</div>
+                        <div class="story-step-desc">சுரங்கத்திற்குள் சென்றாலும் வரைபடத்தில் வாகனம் தொடர்ந்து நகர்ந்துகொண்டே இருக்கும்.</div>
+                    </div>
+                </div>
+                <div class="story-step-item">
+                    <div class="story-step-num">9</div>
+                    <div class="story-step-body">
+                        <div class="story-step-title">🟢 GNSS மீண்டும் கிடைத்தல்</div>
+                        <div class="story-step-desc">சுரங்கத்திலிருந்து வெளியே வந்ததும் GNSS சமிக்ஞை மீண்டும் கிடைக்கிறது.</div>
+                    </div>
+                </div>
+                <div class="story-step-item">
+                    <div class="story-step-num">10</div>
+                    <div class="story-step-body">
+                        <div class="story-step-title">🔄 சீரான ஒத்திசைவு (Smooth Recovery)</div>
+                        <div class="story-step-desc">திடீரென்று குதிக்காமல், மெதுவாகவும் சரியாகவும் மீண்டும் GNSS வழிசெலுத்தலுக்கு மாறும்.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Main Bottom Navigation (App-level) -->

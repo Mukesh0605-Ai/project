@@ -1249,6 +1249,17 @@ function wireEvents() {
     const bs = $('btn-start-nav');
     if (bs) bs.addEventListener('click', startNavigation);
 
+    // Prototype Story Flow Modal Listeners
+    const btnStory = $('btn-story-flow');
+    const storyModal = $('story-modal');
+    const btnCloseStory = $('btn-close-story');
+    if (btnStory && storyModal) {
+        btnStory.addEventListener('click', () => { storyModal.style.display = 'flex'; });
+    }
+    if (btnCloseStory && storyModal) {
+        btnCloseStory.addEventListener('click', () => { storyModal.style.display = 'none'; });
+    }
+
     // End Navigation Button
     const be = $('btn-end-nav');
     if (be) be.addEventListener('click', () => {
