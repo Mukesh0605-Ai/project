@@ -310,14 +310,17 @@ function tick(dt) {
         const aiDv   = aiOut.deltaSpeed * dt * 10;
 
         let newSpeed = S.drSpeed + physDv + aiDv;
-        newSpeed = Math.max(0, Math.min(120, newSpeed));
+        newSpeed = Math.max(35, Math.min(120, newSpeed)); // Ensure vehicle never stops during DR
 
         const physDh = imu.gz * dt * RAD2DEG * 0.4;
         const aiDh   = aiOut.deltaHeading * dt * 5;
         let newHeading = (S.drHeading + physDh + aiDh + 360) % 360;
 
         const avgSpeedMs = (S.drSpeed + newSpeed) / 2 / 3.6;
-        const distM = avgSpeedMs * dt * (S.isSimulation ? S.simSpeed : 1.0);
+        const distM = avgSpeedMs * dt * (S.simSpeed || 1.0);
+
+        // Advance route progress along the polyline during DR phase
+        advanceRoute(coords, distM);
 
         const hRad = newHeading * DEG2RAD;
         const dlat = (distM * Math.cos(hRad)) / 111320;
@@ -332,6 +335,7 @@ function tick(dt) {
             newLat = newLat * 0.25 + matched.lat * 0.75;
             newLng = newLng * 0.25 + matched.lng * 0.75;
             newHeading = newHeading * 0.3 + matched.heading * 0.7;
+            S.routeIdx = lastMatchedRouteIdx;
         }
 
         S.drLat = newLat;
@@ -498,11 +502,11 @@ function triggerGPSLoss() {
     S.blackoutSeconds = 0;
     datasetIdx = 0;
 
-    // Preserve authoritative last confirmed GPS position, speed, and heading
-    S.drLat = S.currentLat;
-    S.drLng = S.currentLng;
-    S.drSpeed = S.currentSpeed;
-    S.drHeading = S.currentHeading;
+    // Preserve authoritative last confirmed GPS position, speed, and heading (or default to smooth demo speed)
+    S.drLat = S.currentLat || (S.route && S.route.coords[0] ? S.route.coords[0].lat : 20.5937);
+    S.drLng = S.currentLng || (S.route && S.route.coords[0] ? S.route.coords[0].lng : 78.9629);
+    S.drSpeed = (S.currentSpeed && S.currentSpeed > 10) ? S.currentSpeed : 45;
+    S.drHeading = S.currentHeading || 0;
     S.drConfidence = 0.95;
     S.drDrift = 0;
     lastMatchedRouteIdx = S.routeIdx;
