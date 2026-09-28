@@ -1603,5 +1603,59 @@ html, body {
 .story-step-title { font-size: 13px; font-weight: 700; color: white; margin-bottom: 2px; }
 .story-step-desc { font-size: 11px; color: var(--text2); line-height: 1.4; }
 
+/* ============================================================ */
+/* GPS LOSS DROP PIN & GHOST VEHICLE PUCK */
+/* ============================================================ */
+.gps-loss-drop-marker {
+    position: relative;
+    width: 40px;
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.gps-loss-ping {
+    position: absolute;
+    top: 5px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #EF4444;
+    background: rgba(239, 68, 68, 0.35);
+    animation: gps-loss-ping 1.5s ease-out infinite;
+}
+@keyframes gps-loss-ping {
+    0% { transform: scale(0.6); opacity: 0.9; }
+    100% { transform: scale(2.0); opacity: 0; }
+}
+.gps-loss-pin {
+    font-size: 24px;
+    z-index: 2;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+}
+.gps-loss-label {
+    font-size: 9px;
+    font-weight: 800;
+    color: white;
+    background: #EF4444;
+    padding: 2px 6px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    z-index: 3;
+    margin-top: -4px;
+}
+
+.dr-ghost-puck {
+    filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.9));
+    animation: dr-ghost-pulse 1.2s ease-in-out infinite alternate !important;
+}
+@keyframes dr-ghost-pulse {
+    0% { opacity: 0.65; transform: scale(0.95); }
+    100% { opacity: 0.95; transform: scale(1.08); }
+}
+
 
 

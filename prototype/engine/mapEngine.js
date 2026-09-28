@@ -63,16 +63,45 @@ export class MapEngine {
     }
 
     _createVehicleIcon(heading = 0, mode = 'GPS') {
-        const color = mode === 'DR' ? '#F59E0B' : mode === 'RECOVERY' ? '#10B981' : '#1A73E8';
+        const isDR = mode === 'DR';
+        const color = isDR ? '#F59E0B' : mode === 'RECOVERY' ? '#10B981' : '#1A73E8';
+        const opacity = isDR ? '0.78' : '1.0';
         return L.divIcon({
             className: '',
-            html: `<div class="vehicle-puck" style="--puck-color:${color}">
+            html: `<div class="vehicle-puck ${isDR ? 'dr-ghost-puck' : ''}" style="--puck-color:${color}; opacity:${opacity}">
                      <div class="puck-radar"></div>
                      <div class="puck-arrow" style="transform:rotate(${heading}deg)">▲</div>
                    </div>`,
             iconSize: [48, 48],
             iconAnchor: [24, 24]
         });
+    }
+
+    showGpsLossMarker(lat, lng) {
+        if (!this.isInitialized || lat == null || lng == null) return;
+        if (!this.gpsLossMarker) {
+            const icon = L.divIcon({
+                className: '',
+                html: `<div class="gps-loss-drop-marker" title="GPS Signal Died Here">
+                         <div class="gps-loss-ping"></div>
+                         <div class="gps-loss-pin">📍</div>
+                         <div class="gps-loss-label">GPS DIED</div>
+                       </div>`,
+                iconSize: [40, 50],
+                iconAnchor: [20, 45]
+            });
+            this.gpsLossMarker = L.marker([lat, lng], { icon, zIndexOffset: 900 }).addTo(this.map);
+        } else {
+            this.gpsLossMarker.setLatLng([lat, lng]);
+            this.gpsLossMarker.addTo(this.map);
+        }
+    }
+
+    clearGpsLossMarker() {
+        if (this.gpsLossMarker) {
+            this.map.removeLayer(this.gpsLossMarker);
+            this.gpsLossMarker = null;
+        }
     }
 
     // Update vehicle position and orientation with real GPS coordinates

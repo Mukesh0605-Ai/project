@@ -294,6 +294,7 @@ function tick(dt) {
             S.currentLng = S.gpsLngAtRecovery;
             session.endOutage(haversine(S.drLatAtRecovery, S.drLngAtRecovery, S.gpsLatAtRecovery, S.gpsLngAtRecovery), S.recoveryDuration);
 
+            mapEngine.clearGpsLossMarker();
             const banner = $('banner-gps-lost');
             if (banner) banner.style.display = 'none';
             const badge = $('dr-floating-badge');
@@ -532,6 +533,9 @@ function triggerGPSLoss() {
             stopMainLoop();
         }
     }, 100);
+
+    // Show stationary GPS Loss pin at exact outage point
+    mapEngine.showGpsLossMarker(S.drLat, S.drLng);
 
     // Show banner, DR badge & sensor diagnostics panel on active navigation screen
     const banner = $('banner-gps-lost');
