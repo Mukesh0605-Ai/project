@@ -110,7 +110,8 @@ export class MapEngine {
 
         // Camera follow only if active navigation has followCamera enabled
         if (this.followCamera) {
-            this.map.setView(latlng, this.map.getZoom(), { animate: false });
+            const navZoom = Math.max(17, this.map.getZoom());
+            this.map.setView(latlng, navZoom, { animate: false });
         }
 
         // Track traveled path

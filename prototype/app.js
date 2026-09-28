@@ -298,6 +298,8 @@ function tick(dt) {
             if (banner) banner.style.display = 'none';
             const badge = $('dr-floating-badge');
             if (badge) badge.style.display = 'none';
+            const diagPanel = $('diagnostics-panel');
+            if (diagPanel) diagPanel.style.display = 'none';
 
             const sigText = $('nav-signal-text');
             if (sigText) sigText.textContent = '🟢 LIVE GPS';
@@ -531,11 +533,13 @@ function triggerGPSLoss() {
         }
     }, 100);
 
-    // Show banner & DR overlays on active navigation screen
+    // Show banner, DR badge & sensor diagnostics panel on active navigation screen
     const banner = $('banner-gps-lost');
     if (banner) banner.style.display = 'flex';
     const badge = $('dr-floating-badge');
     if (badge) badge.style.display = 'flex';
+    const diagPanel = $('diagnostics-panel');
+    if (diagPanel) diagPanel.style.display = 'block';
 
     T('dr-banner-icon', '🔴');
     T('dr-banner-title', '🔴 GNSS Signal Lost');
@@ -1035,6 +1039,7 @@ function startNavigation() {
     mapEngine.setRoute(S.route.coords);
     mapEngine.clearPath();
     mapEngine.setMarkers(S.origin, S.destination);
+    mapEngine.flyTo(S.currentLat, S.currentLng, 18);
     mapEngine.setFollowCamera(true);
 
     showScreen('navigation');
