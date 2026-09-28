@@ -293,7 +293,15 @@ function tick(dt) {
             S.currentLat = S.gpsLatAtRecovery;
             S.currentLng = S.gpsLngAtRecovery;
             session.endOutage(haversine(S.drLatAtRecovery, S.drLngAtRecovery, S.gpsLatAtRecovery, S.gpsLngAtRecovery), S.recoveryDuration);
-            showScreen('navigation');
+
+            const banner = $('banner-gps-lost');
+            if (banner) banner.style.display = 'none';
+            const badge = $('dr-floating-badge');
+            if (badge) badge.style.display = 'none';
+
+            const sigText = $('nav-signal-text');
+            if (sigText) sigText.textContent = '🟢 LIVE GPS';
+
             toast('✅ GPS Restored — Authoritative real GPS active', 'success');
         }
 
@@ -514,7 +522,6 @@ function triggerGPSLoss() {
     S.blackoutTimerId = setInterval(() => {
         S.blackoutSeconds += 0.1;
 
-        // Requirement M: Stop navigation updates after max 5 minutes (300s)
         if (S.blackoutSeconds >= 300) {
             clearInterval(S.blackoutTimerId);
             T('dr-banner-title', 'GPS Lost — Navigation Paused');
@@ -524,7 +531,22 @@ function triggerGPSLoss() {
         }
     }, 100);
 
-    showScreen('dr');
+    // Show banner & DR overlays on active navigation screen
+    const banner = $('banner-gps-lost');
+    if (banner) banner.style.display = 'flex';
+    const badge = $('dr-floating-badge');
+    if (badge) badge.style.display = 'flex';
+
+    T('dr-banner-icon', '🔴');
+    T('dr-banner-title', '🔴 GNSS Signal Lost');
+    T('dr-banner-sub', 'Switching to Intelligent Dead Reckoning (IMU + AI)...');
+
+    const sigText = $('nav-signal-text');
+    if (sigText) sigText.textContent = '🔴 GPS LOST';
+
+    const bg = $('btn-sim-gps-action');
+    if (bg) { bg.textContent = '🛰️ Restore GPS'; bg.className = 'btn-success btn-sm'; }
+
     toast('🔴 GPS SIGNAL LOST — Intelligent Dead Reckoning Active', 'error', 4000);
     beep('loss');
     speak('GPS signal lost. Switching to intelligent dead reckoning.');
@@ -549,12 +571,21 @@ function triggerGPSRecovery() {
     S.gpsLatAtRecovery = S.currentLat;
     S.gpsLngAtRecovery = S.currentLng;
 
-    showScreen('recovery');
-    T('recovery-duration', `${dur.toFixed(1)} s`);
-    T('recovery-drift', `${finalDrift.toFixed(1)} m`);
-    T('recovery-dist', `${(S.totalDistanceM / 1000).toFixed(2)} km`);
+    // Update banner for recovery mode
+    const banner = $('banner-gps-lost');
+    if (banner) banner.style.display = 'flex';
 
-    toast('✅ GPS Signal Restored — Real GPS authoritative', 'success', 3500);
+    T('dr-banner-icon', '🔵');
+    T('dr-banner-title', '🔵 GNSS Signal Restored');
+    T('dr-banner-sub', 'Re-synchronizing estimated position to satellites...');
+
+    const sigText = $('nav-signal-text');
+    if (sigText) sigText.textContent = '🔵 RECOVERING';
+
+    const bg = $('btn-sim-gps-action');
+    if (bg) { bg.textContent = '📵 GPS Loss'; bg.className = 'btn-danger btn-sm'; }
+
+    toast('✅ GPS Signal Restored — Re-synchronizing...', 'success', 3500);
     beep('restore');
     speak('GPS signal restored. Position locked to satellites.');
 }

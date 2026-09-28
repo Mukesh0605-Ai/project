@@ -204,6 +204,71 @@
 <!-- SCREEN 3: NAVIGATION (GPS Active) -->
 <!-- ============================================================ -->
 <div id="screen-navigation" class="screen map-screen">
+    <!-- GPS Lost / Recovery Banner -->
+    <div class="gps-lost-banner" id="banner-gps-lost" style="display: none;">
+        <div class="gps-lost-icon-wrap">
+            <span class="gps-lost-icon" id="dr-banner-icon">🔴</span>
+        </div>
+        <div class="gps-lost-text">
+            <div class="gps-lost-title" id="dr-banner-title">GNSS Signal Lost</div>
+            <div class="gps-lost-sub" id="dr-banner-sub">Switching to Intelligent Dead Reckoning (IMU + AI)...</div>
+        </div>
+    </div>
+    
+    <!-- DR Floating Badge (Right side) -->
+    <div class="dr-floating-badge" id="dr-floating-badge" style="display: none;">
+        <span class="dr-text">DR</span>
+        <span class="dr-status">ON</span>
+    </div>
+
+    <!-- Diagnostics Panel -->
+    <div class="diagnostics-panel" id="diagnostics-panel" style="display: none;">
+        <div class="diag-header">
+            <div class="diag-icon">⚙️</div>
+            <div class="diag-title-wrap">
+                <div class="diag-title">Intelligent Dead Reckoning</div>
+                <div class="diag-sub">Using IMU + AI + EKF + Map Matching</div>
+            </div>
+        </div>
+        <div class="diag-list">
+            <div class="diag-item">
+                <div class="diag-item-icon">💡</div>
+                <div class="diag-item-text">
+                    <div class="diag-item-title">IMU Data</div>
+                    <div class="diag-item-sub">(Accelerometer + Gyro)</div>
+                </div>
+                <div class="diag-item-status">✅</div>
+            </div>
+            <div class="diag-item">
+                <div class="diag-item-icon">🧠</div>
+                <div class="diag-item-text">
+                    <div class="diag-item-title">AI Model</div>
+                    <div class="diag-item-sub">(Velocity Estimation)</div>
+                </div>
+                <div class="diag-item-status">✅</div>
+            </div>
+            <div class="diag-item">
+                <div class="diag-item-icon">📍</div>
+                <div class="diag-item-text">
+                    <div class="diag-item-title">EKF / DR</div>
+                    <div class="diag-item-sub">(State Estimation)</div>
+                </div>
+                <div class="diag-item-status">✅</div>
+            </div>
+            <div class="diag-item">
+                <div class="diag-item-icon">🗺️</div>
+                <div class="diag-item-text">
+                    <div class="diag-item-title">Map Matching</div>
+                    <div class="diag-item-sub">(Road Constraint)</div>
+                </div>
+                <div class="diag-item-status">✅</div>
+            </div>
+        </div>
+        <div class="diag-footer">
+            <span class="diag-footer-icon">🔄</span> Bounded DR (Max 5 mins)
+        </div>
+    </div>
+
     <!-- Arrival Overlay -->
     <div id="arrival-overlay" class="arrival-overlay" style="display: none;">
         <div class="arrival-icon">🏁</div>
