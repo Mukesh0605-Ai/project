@@ -261,7 +261,7 @@ function tick(dt) {
 
     // 1. ROUTE ADVANCEMENT — Vehicle MUST ALWAYS move continuously along route during active navigation
     if (S.isNavigating && !S.isRecovering) {
-        const speedKmh = S.isGPSLost ? Math.max(45, S.drSpeed) : (S.currentSpeed && S.currentSpeed > 5 ? S.currentSpeed : 45);
+        const speedKmh = S.isGPSLost ? Math.max(22, S.drSpeed) : (S.currentSpeed && S.currentSpeed > 5 ? S.currentSpeed : 22);
         const speedMs = (speedKmh / 3.6) * (S.simSpeed || 1.0);
         const distThisFrame = speedMs * dt;
         advanceRoute(coords, distThisFrame);
@@ -496,7 +496,7 @@ function triggerGPSLoss() {
 
     S.drLat = S.outageLat;
     S.drLng = S.outageLng;
-    S.drSpeed = (S.currentSpeed && S.currentSpeed > 10) ? S.currentSpeed : 45;
+    S.drSpeed = (S.currentSpeed && S.currentSpeed > 10) ? S.currentSpeed : 22;
     S.drHeading = S.currentHeading || 0;
     S.drConfidence = 0.95;
     S.drDrift = 0;
@@ -1017,7 +1017,7 @@ function startNavigation() {
     if (!S.gpsIsLive || S.currentSpeed < 2) {
         S.isSimulation = true;
         if (!S.currentSpeed || S.currentSpeed < 5) {
-            S.currentSpeed = 45;
+            S.currentSpeed = 22;
         }
     }
     S.isGPSLost = false;
