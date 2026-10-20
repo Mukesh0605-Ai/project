@@ -135,11 +135,57 @@ html, body {
 }
 
 /* Persistent map layer */
+#map,
 .persistent-map {
     position: fixed;
-    inset: 46px 0 0 0;
+    top: 46px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: calc(100vh - 46px);
     z-index: 1;
-    background: #0a1628;
+    background: #060B14;
+    overflow: hidden;
+}
+
+/* ============================================================ */
+/* LEAFLET CONTAINER & TILE OVERRIDES                            */
+/* ============================================================ */
+.leaflet-container {
+    background: #060B14 !important;
+    width: 100% !important;
+    height: 100% !important;
+    font-family: var(--font-body) !important;
+    outline: none;
+}
+
+/* Futuristic Dark Navigation Filter for map tiles (Zero API key dependencies) */
+.leaflet-tile {
+    filter: invert(1) hue-rotate(185deg) brightness(0.82) contrast(1.22) saturate(1.15) !important;
+    -webkit-filter: invert(1) hue-rotate(185deg) brightness(0.82) contrast(1.22) saturate(1.15) !important;
+}
+
+.leaflet-control-attribution {
+    display: none !important;
+}
+
+.leaflet-control-zoom {
+    display: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+    background: var(--surface-glass) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    color: var(--text-primary) !important;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--border-light) !important;
+    box-shadow: var(--shadow-glass) !important;
+}
+
+.leaflet-popup-tip {
+    background: var(--surface-glass) !important;
 }
 
 /* ============================================================ */

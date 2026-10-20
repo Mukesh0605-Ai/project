@@ -28,13 +28,24 @@ export class MapEngine {
             tap: false
         }).setView([lat, lng], zoom);
 
-        // Dark Stadia Maps tile — premium dark navigation theme
-        // Primary: CartoDB Dark Matter (no API key needed, free tile)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            subdomains: 'abcd',
+        // Google Maps tiles as primary with automatic OpenStreetMap fallback
+        const primaryTiles = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            subdomains: ['0', '1', '2', '3'],
             maxZoom: 20,
-            attribution: '&copy; CartoDB'
-        }).addTo(this.map);
+            attribution: '&copy; Google Maps'
+        });
+
+        primaryTiles.on('tileerror', () => {
+            if (!this._osmFallbackAdded) {
+                this._osmFallbackAdded = true;
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(this.map);
+            }
+        });
+
+        primaryTiles.addTo(this.map);
 
         // Route polylines — electric blue glow
         // Shadow/glow polyline behind the main route
@@ -56,6 +67,12 @@ export class MapEngine {
         }).addTo(this.map);
 
         this.isInitialized = true;
+
+        // Force Leaflet recalculation once DOM layout settles
+        setTimeout(() => {
+            if (this.map) this.map.invalidateSize();
+        }, 120);
+
         return this.map;
     }
 

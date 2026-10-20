@@ -5,7 +5,7 @@
 import { GPSEngine, haversine, computeBearing, interpolate } from './engine/gps.js';
 import { SensorEngine } from './engine/sensors.js';
 import { AIModel } from './engine/aiModel.js';
-import { MapEngine } from './engine/mapEngine.js';
+import { MapEngine } from './engine/mapEngine.js?v=4.2';
 import { RoutingEngine } from './engine/routing.js';
 import { SessionLog } from './engine/sessionLog.js';
 import { IOVNBD_DATA } from './engine/iovnbd_data.js';
