@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="navisense.css?v=4.2" />
+    <link rel="stylesheet" href="navisense.css?v=4.3" />
 </head>
 <body>
 
@@ -50,19 +50,68 @@
 <!-- ============================================================ -->
 <main id="screen-home" class="screen active map-screen" role="main">
 
-    <!-- Floating Top Search Bar -->
-    <div class="floating-search-bar" id="search-container" role="search">
-        <div class="search-profile-icon" aria-hidden="true">🔍</div>
-        <input
-            id="dest-input"
-            class="search-input"
-            type="search"
-            placeholder="Search village, city, POI, landmark..."
-            autocomplete="off"
-            aria-label="Search destination"
-            spellcheck="false"
-        />
-        <button id="btn-search-clear" class="search-clear-btn" style="display:none;" aria-label="Clear search">✕</button>
+    <!-- Floating Origin & Destination Trip Planner Card -->
+    <div class="floating-search-bar trip-planner-card" id="search-container" role="search">
+        <!-- START LOCATION ROW -->
+        <div class="planner-row origin-row">
+            <div class="planner-point-badge origin-badge" title="Start Point (Origin)">
+                <span class="point-code">A</span>
+            </div>
+            <div class="planner-input-wrap">
+                <label for="origin-input" class="planner-label">FROM / START LOCATION</label>
+                <input
+                    id="origin-input"
+                    class="planner-input"
+                    type="search"
+                    placeholder="📍 Your Live GPS Location"
+                    autocomplete="off"
+                    aria-label="Start location"
+                    spellcheck="false"
+                />
+            </div>
+            <div class="planner-row-actions">
+                <button id="btn-origin-gps" class="planner-icon-btn" title="Use Live GPS" aria-label="Use Current GPS">🎯</button>
+                <button id="btn-origin-map" class="planner-icon-btn" title="Pick Start on Map" aria-label="Pick on Map">📌</button>
+                <button id="btn-origin-clear" class="search-clear-btn" style="display:none;" aria-label="Clear start">✕</button>
+            </div>
+        </div>
+
+        <!-- DIVIDER WITH ANIMATED SWAP BUTTON -->
+        <div class="planner-divider-wrap">
+            <div class="planner-line"></div>
+            <button id="btn-swap-locations" class="planner-swap-btn" title="Swap Start & Destination" aria-label="Swap Locations">⇅</button>
+            <div class="planner-line"></div>
+        </div>
+
+        <!-- DESTINATION LOCATION ROW -->
+        <div class="planner-row dest-row">
+            <div class="planner-point-badge dest-badge" title="Destination Point">
+                <span class="point-code">B</span>
+            </div>
+            <div class="planner-input-wrap">
+                <label for="dest-input" class="planner-label">TO / DESTINATION</label>
+                <input
+                    id="dest-input"
+                    class="planner-input"
+                    type="search"
+                    placeholder="Search village, city, POI, landmark..."
+                    autocomplete="off"
+                    aria-label="Destination location"
+                    spellcheck="false"
+                />
+            </div>
+            <div class="planner-row-actions">
+                <button id="btn-dest-map" class="planner-icon-btn" title="Pick Destination on Map" aria-label="Pick on Map">📌</button>
+                <button id="btn-search-clear" class="search-clear-btn" style="display:none;" aria-label="Clear destination">✕</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAP PICKER MODE BANNER (Appears when user taps 📌 Pick on Map) -->
+    <div id="map-picker-banner" class="map-picker-banner" style="display:none;" role="status">
+        <span class="picker-pulsing-dot"></span>
+        <span id="picker-banner-text" class="picker-banner-text">Tap anywhere on map to select location</span>
+        <button id="btn-picker-cancel" class="picker-cancel-btn">✕ Cancel</button>
     </div>
 
     <!-- Search Results Dropdown -->
@@ -202,13 +251,20 @@
                     style="width:100%; font-size:13px; color:rgba(255,255,255,0.7); padding:0;" aria-label="Origin location" />
             </div>
         </div>
-        <div style="height:1px; background:rgba(255,255,255,0.07); margin-bottom:10px; margin-left:44px;"></div>
+        <!-- DIVIDER WITH SWAP -->
+        <div style="display:flex; align-items:center; gap:8px; margin:2px 0 2px 44px;">
+            <div style="flex:1; height:1px; background:rgba(0,180,255,0.2);"></div>
+            <button id="btn-route-swap" class="planner-swap-btn" title="Swap Start & Destination" aria-label="Swap Locations">⇅</button>
+            <div style="flex:1; height:1px; background:rgba(255,255,255,0.06);"></div>
+        </div>
         <div style="display:flex; gap:10px; align-items:center;">
-            <div style="width:34px; text-align:center; color:#EF4444; font-size:18px; flex-shrink:0;">📍</div>
+            <div class="planner-point-badge dest-badge" style="width:34px; height:34px;">
+                <span class="point-code">B</span>
+            </div>
             <div style="flex:1;">
-                <div style="font-size:9px; color:#64748B; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">TO</div>
+                <div style="font-size:9px; color:#F87171; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">TO / DESTINATION</div>
                 <input id="route-dest-display" class="search-input" type="text" value="Selected Destination" readonly
-                    style="width:100%; font-size:14px; font-weight:700; color:#F0F6FF; padding:0;" aria-label="Destination" />
+                    style="width:100%; font-size:14px; font-weight:700; color:#F0F6FF; padding:0; cursor:pointer;" aria-label="Destination" />
             </div>
         </div>
     </div>
@@ -660,7 +716,7 @@
 <!-- LIBRARIES                                                    -->
 <!-- ============================================================ -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=4.2"></script>
+<script type="module" src="app.js?v=4.3"></script>
 
 </body>
 </html>

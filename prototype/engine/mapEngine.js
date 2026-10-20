@@ -259,25 +259,61 @@ export class MapEngine {
         }
 
         if (origin && origin.lat != null && origin.lng != null) {
+            const originHtml = `
+            <div class="map-beacon origin-beacon" title="Start Point: ${origin.label || 'Origin'}">
+                <div class="beacon-pulse green-pulse"></div>
+                <div class="beacon-pin green-pin">
+                    <span class="beacon-text">A</span>
+                </div>
+                <div class="beacon-label">${origin.label ? (origin.label.length > 14 ? origin.label.slice(0, 14) + '…' : origin.label) : 'START'}</div>
+            </div>`;
+
             this.originMarker = L.marker([origin.lat, origin.lng], {
                 icon: L.divIcon({
                     className: '',
-                    html: `<div class="map-marker origin-marker">A</div>`,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 32]
-                })
+                    html: originHtml,
+                    iconSize: [48, 60],
+                    iconAnchor: [24, 46]
+                }),
+                zIndexOffset: 800
             }).addTo(this.map);
+
+            if (origin.label) {
+                this.originMarker.bindTooltip(`<b>Start:</b> ${origin.label}`, {
+                    direction: 'top',
+                    offset: [0, -42],
+                    className: 'custom-map-tooltip'
+                });
+            }
         }
 
         if (dest && dest.lat != null && dest.lng != null) {
+            const destHtml = `
+            <div class="map-beacon dest-beacon" title="Destination: ${dest.label || 'Destination'}">
+                <div class="beacon-pulse red-pulse"></div>
+                <div class="beacon-pin red-pin">
+                    <span class="beacon-text">B</span>
+                </div>
+                <div class="beacon-label">${dest.label ? (dest.label.length > 14 ? dest.label.slice(0, 14) + '…' : dest.label) : 'DEST'}</div>
+            </div>`;
+
             this.destMarker = L.marker([dest.lat, dest.lng], {
                 icon: L.divIcon({
                     className: '',
-                    html: `<div class="map-marker dest-marker">📍</div>`,
-                    iconSize: [32, 40],
-                    iconAnchor: [16, 40]
-                })
+                    html: destHtml,
+                    iconSize: [48, 60],
+                    iconAnchor: [24, 46]
+                }),
+                zIndexOffset: 850
             }).addTo(this.map);
+
+            if (dest.label) {
+                this.destMarker.bindTooltip(`<b>Destination:</b> ${dest.label}`, {
+                    direction: 'top',
+                    offset: [0, -42],
+                    className: 'custom-map-tooltip'
+                });
+            }
         }
     }
 

@@ -5,7 +5,7 @@
 import { GPSEngine, haversine, computeBearing, interpolate } from './engine/gps.js';
 import { SensorEngine } from './engine/sensors.js';
 import { AIModel } from './engine/aiModel.js';
-import { MapEngine } from './engine/mapEngine.js?v=4.2';
+import { MapEngine } from './engine/mapEngine.js?v=4.3';
 import { RoutingEngine } from './engine/routing.js';
 import { SessionLog } from './engine/sessionLog.js';
 import { IOVNBD_DATA } from './engine/iovnbd_data.js';
@@ -923,6 +923,10 @@ async function planRoute(outageZones = null) {
     }
 
     T('route-status', '🔍 Calculating routes from Current GPS...');
+    const oi = $('origin-input');
+    if (oi) oi.value = `📍 ${S.origin.label || 'Current Location'}`;
+    const di = $('dest-input');
+    if (di) di.value = `📍 ${S.destination.label}`;
     const ro = $('route-origin-display');
     if (ro) ro.value = `📍 ${S.origin.label || 'Current Location'}`;
     const rd = $('route-dest-display');
@@ -1073,83 +1077,200 @@ function startNavigation() {
 // ============================================================
 // DESTINATION SEARCH COMPONENT (Requirements E & F)
 // ============================================================
+// ============================================================
+// DUAL ORIGIN & DESTINATION SEARCH & PICKER (Requirements)
+// ============================================================
 let searchDebounceTimer = null;
+let activeSearchField = 'dest'; // 'origin' | 'dest'
+let pickOnMapTarget = null;     // null | 'origin' | 'dest'
 
 function setupSearchComponent() {
-    const input = $('dest-input');
+    const originInput = $('origin-input');
+    const destInput = $('dest-input');
     const resultsContainer = $('search-results');
-    const clearBtn = $('btn-search-clear');
+    const clearDestBtn = $('btn-search-clear');
+    const clearOriginBtn = $('btn-origin-clear');
+    const swapBtn = $('btn-swap-locations');
+    const routeSwapBtn = $('btn-route-swap');
+    const originGpsBtn = $('btn-origin-gps');
+    const originMapBtn = $('btn-origin-map');
+    const destMapBtn = $('btn-dest-map');
+    const pickerCancelBtn = $('btn-picker-cancel');
 
-    if (!input || !resultsContainer) return;
+    // Attach search handlers to an input field
+    function bindSearchInput(inputEl, clearEl, fieldType) {
+        if (!inputEl) return;
 
-    input.addEventListener('input', () => {
-        const query = input.value.trim();
-        if (clearBtn) clearBtn.style.display = query ? 'block' : 'none';
+        inputEl.addEventListener('focus', () => {
+            activeSearchField = fieldType;
+        });
 
-        clearTimeout(searchDebounceTimer);
-        if (query.length < 2) {
-            resultsContainer.style.display = 'none';
-            resultsContainer.innerHTML = '';
-            return;
-        }
+        inputEl.addEventListener('input', () => {
+            activeSearchField = fieldType;
+            const query = inputEl.value.trim();
+            if (clearEl) clearEl.style.display = query ? 'block' : 'none';
 
-        resultsContainer.style.display = 'block';
-        resultsContainer.innerHTML = '<div class="search-state-msg">🔍 Searching destinations...</div>';
-
-        // 300ms query debounce
-        searchDebounceTimer = setTimeout(async () => {
-            try {
-                const results = await routing.searchDestination(query);
-                if (results.length === 0) {
-                    resultsContainer.innerHTML = '<div class="search-state-msg">No matching locations found</div>';
-                    return;
+            clearTimeout(searchDebounceTimer);
+            if (query.length < 2) {
+                if (resultsContainer) {
+                    resultsContainer.style.display = 'none';
+                    resultsContainer.innerHTML = '';
                 }
-
-                resultsContainer.innerHTML = results.map((item, idx) => {
-                    const icon = getPlaceIcon(item.type);
-                    const subtitle = [item.locality, item.district, item.state].filter(Boolean).join(', ');
-                    return `
-                        <div class="search-result-item" data-idx="${idx}">
-                            <div class="search-result-icon">${icon}</div>
-                            <div class="search-result-body">
-                                <div class="search-result-title">${escapeHtml(item.name)}</div>
-                                <div class="search-result-subtitle">${escapeHtml(subtitle || item.country)}</div>
-                            </div>
-                            <span class="search-result-type-tag">${escapeHtml(item.type)}</span>
-                        </div>
-                    `;
-                }).join('');
-
-                resultsContainer.querySelectorAll('.search-result-item').forEach(el => {
-                    el.addEventListener('click', () => {
-                        const idx = parseInt(el.dataset.idx);
-                        const sel = results[idx];
-                        if (sel) {
-                            selectSearchResult(sel);
-                        }
-                    });
-                });
-            } catch (err) {
-                resultsContainer.innerHTML = '<div class="search-state-msg">Search unavailable</div>';
+                return;
             }
-        }, 300);
-    });
 
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            input.value = '';
-            clearBtn.style.display = 'none';
-            resultsContainer.style.display = 'none';
-            input.focus();
+            if (!resultsContainer) return;
+            resultsContainer.style.display = 'block';
+            resultsContainer.innerHTML = `<div class="search-state-msg">🔍 Searching for ${fieldType === 'origin' ? 'Start Location' : 'Destination'}...</div>`;
+
+            searchDebounceTimer = setTimeout(async () => {
+                try {
+                    const results = await routing.searchDestination(query);
+                    if (results.length === 0) {
+                        resultsContainer.innerHTML = '<div class="search-state-msg">No matching locations found</div>';
+                        return;
+                    }
+
+                    resultsContainer.innerHTML = results.map((item, idx) => {
+                        const icon = getPlaceIcon(item.type);
+                        const subtitle = [item.locality, item.district, item.state].filter(Boolean).join(', ');
+                        const badgeColor = activeSearchField === 'origin' ? '#10B981' : '#EF4444';
+                        const badgeLabel = activeSearchField === 'origin' ? 'A · START' : 'B · DEST';
+                        return `
+                            <div class="search-result-item" data-idx="${idx}">
+                                <div class="search-result-icon">${icon}</div>
+                                <div class="search-result-body">
+                                    <div class="search-result-title">${escapeHtml(item.name)}</div>
+                                    <div class="search-result-subtitle">${escapeHtml(subtitle || item.country)}</div>
+                                </div>
+                                <span class="search-result-type-tag" style="border-color:${badgeColor}40; color:${badgeColor}; font-weight:800;">${badgeLabel}</span>
+                            </div>
+                        `;
+                    }).join('');
+
+                    resultsContainer.querySelectorAll('.search-result-item').forEach(el => {
+                        el.addEventListener('click', () => {
+                            const idx = parseInt(el.dataset.idx);
+                            const sel = results[idx];
+                            if (sel) {
+                                selectSearchResult(sel, activeSearchField);
+                            }
+                        });
+                    });
+                } catch (err) {
+                    resultsContainer.innerHTML = '<div class="search-state-msg">Search service unavailable</div>';
+                }
+            }, 300);
+        });
+
+        if (clearEl) {
+            clearEl.addEventListener('click', () => {
+                inputEl.value = '';
+                clearEl.style.display = 'none';
+                if (resultsContainer) resultsContainer.style.display = 'none';
+                inputEl.focus();
+            });
+        }
+    }
+
+    bindSearchInput(originInput, clearOriginBtn, 'origin');
+    bindSearchInput(destInput, clearDestBtn, 'dest');
+
+    // Live GPS Button for Origin
+    if (originGpsBtn) {
+        originGpsBtn.addEventListener('click', () => {
+            if (S.currentLat != null && S.currentLng != null) {
+                S.origin = { lat: S.currentLat, lng: S.currentLng, label: 'Your Live GPS Location' };
+                if (originInput) originInput.value = '📍 Your Live GPS Location';
+                const ro = $('route-origin-display');
+                if (ro) ro.value = '📍 Your Live GPS Location';
+                mapEngine.setMarkers(S.origin, S.destination);
+                mapEngine.panTo(S.currentLat, S.currentLng, 16);
+                toast('📍 Start set to Live GPS Location', 'success');
+                if (S.destination && S.destination.lat != null) planRoute();
+            } else {
+                toast('Acquiring live GPS location...', 'info');
+                gpsEngine.startGPS();
+            }
         });
     }
 
-    // Close search dropdown if tapped outside
+    // Pick on Map for Origin
+    if (originMapBtn) {
+        originMapBtn.addEventListener('click', () => {
+            enterMapPickerMode('origin');
+        });
+    }
+
+    // Pick on Map for Destination
+    if (destMapBtn) {
+        destMapBtn.addEventListener('click', () => {
+            enterMapPickerMode('dest');
+        });
+    }
+
+    // Cancel Map Picker
+    if (pickerCancelBtn) {
+        pickerCancelBtn.addEventListener('click', () => {
+            exitMapPickerMode();
+        });
+    }
+
+    // Swap Locations (Home screen button & Route screen button)
+    const handleSwap = () => {
+        if (!S.origin && !S.destination) {
+            toast('Set a start or destination location first', 'info');
+            return;
+        }
+
+        const temp = S.origin;
+        S.origin = S.destination;
+        S.destination = temp;
+
+        if (originInput) originInput.value = S.origin ? `📍 ${S.origin.label}` : '';
+        if (destInput) destInput.value = S.destination ? `📍 ${S.destination.label}` : '';
+
+        const ro = $('route-origin-display');
+        if (ro) ro.value = S.origin ? `📍 ${S.origin.label}` : '';
+        const rd = $('route-dest-display');
+        if (rd) rd.value = S.destination ? `📍 ${S.destination.label}` : '';
+
+        mapEngine.setMarkers(S.origin, S.destination);
+        toast('⇅ Swapped Start & Destination', 'info');
+
+        if (S.origin && S.destination) {
+            planRoute();
+        }
+    };
+
+    if (swapBtn) swapBtn.addEventListener('click', handleSwap);
+    if (routeSwapBtn) routeSwapBtn.addEventListener('click', handleSwap);
+
+    // Close search dropdown if clicked outside
     document.addEventListener('click', (e) => {
         if (!e.target.closest('#search-container') && !e.target.closest('#search-results')) {
-            resultsContainer.style.display = 'none';
+            if (resultsContainer) resultsContainer.style.display = 'none';
         }
     });
+}
+
+function enterMapPickerMode(target) {
+    pickOnMapTarget = target;
+    const banner = $('map-picker-banner');
+    const text = $('picker-banner-text');
+    if (banner) banner.style.display = 'flex';
+    if (text) {
+        text.textContent = target === 'origin'
+            ? '🟢 Tap anywhere on map to set Start Location (Point A)'
+            : '🔴 Tap anywhere on map to set Destination (Point B)';
+    }
+    toast(`Tap anywhere on the map to set ${target === 'origin' ? 'Start' : 'Destination'}`, 'info');
+}
+
+function exitMapPickerMode() {
+    pickOnMapTarget = null;
+    const banner = $('map-picker-banner');
+    if (banner) banner.style.display = 'none';
 }
 
 function getPlaceIcon(type) {
@@ -1169,31 +1290,64 @@ function escapeHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function selectSearchResult(item) {
-    const input = $('dest-input');
+function selectSearchResult(item, target = null) {
+    const isOrigin = (target || activeSearchField) === 'origin';
     const resultsContainer = $('search-results');
-    if (input) input.value = `📍 ${item.name}`;
     if (resultsContainer) resultsContainer.style.display = 'none';
 
-    // Store authoritative exact coordinates
-    S.destination = {
-        lat: item.lat,
-        lng: item.lng,
-        label: item.name,
-        address: item.fullAddress,
-        type: item.type
-    };
+    if (isOrigin) {
+        S.origin = {
+            lat: item.lat,
+            lng: item.lng,
+            label: item.name,
+            address: item.fullAddress || item.name,
+            type: item.type
+        };
+        const oi = $('origin-input');
+        if (oi) oi.value = `📍 ${item.name}`;
+        const ro = $('route-origin-display');
+        if (ro) ro.value = `📍 ${item.name}`;
+        toast(`🟢 Start Set: ${item.name}`, 'success');
 
-    // Ensure origin is set to real GPS coordinates if available
-    if (S.currentLat !== null && S.currentLng !== null) {
-        S.origin = { lat: S.currentLat, lng: S.currentLng, label: 'Current Location' };
+        mapEngine.setMarkers(S.origin, S.destination);
+
+        if (S.destination && S.destination.lat != null) {
+            planRoute();
+        } else {
+            toast('Now choose your destination', 'info');
+            const di = $('dest-input');
+            if (di) di.focus();
+        }
+    } else {
+        S.destination = {
+            lat: item.lat,
+            lng: item.lng,
+            label: item.name,
+            address: item.fullAddress || item.name,
+            type: item.type
+        };
+        const di = $('dest-input');
+        if (di) di.value = `📍 ${item.name}`;
+        const rd = $('route-dest-display');
+        if (rd) rd.value = `📍 ${item.name}`;
+        toast(`🔴 Destination Set: ${item.name}`, 'success');
+
+        // If no custom origin selected, ensure live GPS or default location is used
+        if (!S.origin) {
+            if (S.currentLat !== null && S.currentLng !== null) {
+                S.origin = { lat: S.currentLat, lng: S.currentLng, label: 'Your Live GPS Location' };
+            } else {
+                S.origin = { lat: 13.0827, lng: 80.2707, label: 'Current Location' };
+            }
+            const oi = $('origin-input');
+            if (oi) oi.value = `📍 ${S.origin.label}`;
+            const ro = $('route-origin-display');
+            if (ro) ro.value = `📍 ${S.origin.label}`;
+        }
+
+        mapEngine.setMarkers(S.origin, S.destination);
+        planRoute();
     }
-
-    mapEngine.setMarkers(S.origin, S.destination);
-    toast(`📍 Selected: ${item.name}`, 'info');
-
-    // Calculate route immediately
-    planRoute();
 }
 
 // ============================================================
@@ -1217,14 +1371,18 @@ async function loadPreset(p) {
     toast(`Loading simulation corridor: ${p.name}...`, 'info');
     S.isSimulation = true;
 
-    // In simulation mode, preset origin is allowed if no GPS exists
-    if (!S.origin) {
-        S.origin = { ...p.origin };
-    }
+    S.origin = { ...p.origin };
     S.destination = { ...p.dest };
 
+    const oi = $('origin-input');
+    if (oi) oi.value = `📍 ${S.origin.label}`;
     const di = $('dest-input');
     if (di) di.value = `📍 ${S.destination.label}`;
+
+    const ro = $('route-origin-display');
+    if (ro) ro.value = `📍 ${S.origin.label}`;
+    const rd = $('route-dest-display');
+    if (rd) rd.value = `📍 ${S.destination.label}`;
 
     mapEngine.setMarkers(S.origin, S.destination);
     await planRoute(p.outageZones);
@@ -1232,8 +1390,10 @@ async function loadPreset(p) {
 
 async function onMapTap(lat, lng) {
     if (!MAP_SCREENS.has(S.screen) || S.isNavigating) return;
+
+    toast('Resolving location coordinates...', 'info');
     const label = await routing.reverseGeocode(lat, lng);
-    selectSearchResult({
+    const placeItem = {
         name: label,
         locality: '',
         district: '',
@@ -1243,7 +1403,18 @@ async function onMapTap(lat, lng) {
         lng,
         type: 'Pinned Location',
         fullAddress: label
-    });
+    };
+
+    if (pickOnMapTarget === 'origin') {
+        selectSearchResult(placeItem, 'origin');
+        exitMapPickerMode();
+    } else if (pickOnMapTarget === 'dest') {
+        selectSearchResult(placeItem, 'dest');
+        exitMapPickerMode();
+    } else {
+        // Normal map tap: if no destination, set destination; if destination already set, ask or set destination
+        selectSearchResult(placeItem, 'dest');
+    }
 }
 
 // ============================================================
@@ -1375,6 +1546,24 @@ function wireEvents() {
     // Route back to home
     const rb = $('btn-route-back');
     if (rb) rb.addEventListener('click', () => showScreen('home'));
+
+    const roDisp = $('route-origin-display');
+    if (roDisp) {
+        roDisp.addEventListener('click', () => {
+            showScreen('home');
+            const oi = $('origin-input');
+            if (oi) { oi.focus(); oi.select(); }
+        });
+    }
+
+    const rdDisp = $('route-dest-display');
+    if (rdDisp) {
+        rdDisp.addEventListener('click', () => {
+            showScreen('home');
+            const di = $('dest-input');
+            if (di) { di.focus(); di.select(); }
+        });
+    }
 
     // Debug Panel Toggle
     const bd = $('btn-debug');

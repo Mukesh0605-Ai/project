@@ -522,51 +522,338 @@ html, body {
 /* ============================================================ */
 
 /* Floating Search Bar */
+/* Floating Search Bar & Dual Origin-Destination Trip Planner */
 .floating-search-bar {
     position: absolute;
-    top: 58px;
+    top: 54px;
     left: 14px;
     right: 14px;
-    background: var(--glass3);
+    background: rgba(10, 18, 32, 0.94);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
-    border: 1px solid var(--glass-border2);
-    border-radius: 36px;
-    display: flex;
-    align-items: center;
-    padding: 9px 16px;
+    border: 1px solid rgba(0, 180, 255, 0.2);
+    border-radius: var(--radius-xl);
     z-index: 100;
-    box-shadow: var(--shadow), 0 0 0 1px rgba(0,180,255,0.06);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.floating-search-bar:focus-within {
-    border-color: rgba(0, 180, 255, 0.3);
-    box-shadow: var(--shadow), var(--shadow-blue);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 180, 255, 0.1);
+    transition: all 0.25s ease;
 }
 
-.search-profile-icon {
-    width: 34px; height: 34px;
+.trip-planner-card {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 14px;
+    gap: 0;
+}
+
+.trip-planner-card:focus-within {
+    border-color: rgba(0, 180, 255, 0.45);
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.75), 0 0 26px rgba(0, 180, 255, 0.2);
+}
+
+/* Planner Rows */
+.planner-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+    position: relative;
+}
+
+.planner-point-badge {
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: var(--grad-blue);
-    color: white;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 14px;
-    box-shadow: 0 2px 8px rgba(0, 180, 255, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-weight: 800;
+    font-size: 12px;
+    font-family: var(--mono);
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.origin-badge {
+    background: rgba(16, 185, 129, 0.18);
+    border: 1.5px solid #10B981;
+    color: #34D399;
+}
+
+.dest-badge {
+    background: rgba(239, 68, 68, 0.18);
+    border: 1.5px solid #EF4444;
+    color: #F87171;
+}
+
+.planner-input-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.planner-label {
+    font-size: 8.5px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: var(--mono);
+    margin-bottom: 1px;
+}
+
+.origin-row .planner-label { color: #34D399; }
+.dest-row .planner-label { color: #F87171; }
+
+.planner-input {
+    background: transparent;
+    border: none;
+    color: #F0F6FF;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: var(--sans);
+    padding: 0;
+    outline: none;
+    width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.planner-input::placeholder {
+    color: #64748B;
+    font-weight: 400;
+}
+
+.planner-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     flex-shrink: 0;
 }
 
-.floating-search-bar input,
-.search-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: var(--text);
-    font-size: 15px;
-    font-family: var(--sans);
-    padding: 0 12px;
-    outline: none;
+.planner-icon-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94A3B8;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
-.floating-search-bar input::placeholder { color: var(--text3); }
+
+.planner-icon-btn:hover {
+    background: rgba(0, 180, 255, 0.15);
+    border-color: rgba(0, 180, 255, 0.4);
+    color: #00B4FF;
+    transform: scale(1.08);
+}
+
+.planner-icon-btn:active {
+    transform: scale(0.92);
+}
+
+/* Planner Divider & Animated Swap Button */
+.planner-divider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 2px 38px;
+    height: 18px;
+}
+
+.planner-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(0, 180, 255, 0.2), rgba(255, 255, 255, 0.05));
+}
+
+.planner-swap-btn {
+    background: rgba(14, 24, 44, 0.95);
+    border: 1px solid rgba(0, 180, 255, 0.35);
+    color: #00B4FF;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    padding: 0;
+}
+
+.planner-swap-btn:hover {
+    transform: rotate(180deg) scale(1.15);
+    background: #00B4FF;
+    color: #060B14;
+    box-shadow: 0 0 14px rgba(0, 180, 255, 0.6);
+}
+
+.planner-swap-btn:active {
+    transform: rotate(180deg) scale(0.95);
+}
+
+/* Map Picker Banner (When user clicks "Pick on Map") */
+.map-picker-banner {
+    position: fixed;
+    top: 54px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 22, 42, 0.96);
+    border: 1px solid var(--blue-electric);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 180, 255, 0.3);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: 10px 18px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 500;
+    animation: banner-drop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes banner-drop {
+    from { opacity: 0; transform: translate(-50%, -15px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.picker-pulsing-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #00B4FF;
+    box-shadow: 0 0 10px #00B4FF;
+    animation: picker-dot-pulse 1.2s infinite;
+}
+
+@keyframes picker-dot-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.6); opacity: 0.5; }
+}
+
+.picker-banner-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: #F0F6FF;
+    white-space: nowrap;
+}
+
+.picker-cancel-btn {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #F87171;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.picker-cancel-btn:hover {
+    background: #EF4444;
+    color: white;
+}
+
+/* Map Beacons (Point A & Point B markers on Leaflet) */
+.map-beacon {
+    position: relative;
+    width: 48px;
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.beacon-pulse {
+    position: absolute;
+    top: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: beacon-wave 2s infinite ease-out;
+}
+
+@keyframes beacon-wave {
+    0% { transform: scale(0.6); opacity: 0.9; }
+    100% { transform: scale(2.4); opacity: 0; }
+}
+
+.green-pulse { background: rgba(16, 185, 129, 0.4); box-shadow: 0 0 16px rgba(16, 185, 129, 0.8); }
+.red-pulse { background: rgba(239, 68, 68, 0.4); box-shadow: 0 0 16px rgba(239, 68, 68, 0.8); }
+
+.beacon-pin {
+    width: 32px;
+    height: 32px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7);
+    border: 2px solid white;
+    z-index: 2;
+    transition: transform 0.2s ease;
+}
+
+.map-beacon:hover .beacon-pin {
+    transform: rotate(-45deg) scale(1.15);
+}
+
+.green-pin { background: linear-gradient(135deg, #10B981, #059669); }
+.red-pin { background: linear-gradient(135deg, #EF4444, #B91C1C); }
+
+.beacon-text {
+    transform: rotate(45deg);
+    font-size: 13px;
+    font-weight: 900;
+    color: white;
+    font-family: var(--mono);
+    line-height: 1;
+}
+
+.beacon-label {
+    margin-top: 4px;
+    background: rgba(6, 11, 20, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #F0F6FF;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-family: var(--mono);
+}
+
+.custom-map-tooltip {
+    background: rgba(10, 18, 32, 0.95) !important;
+    border: 1px solid rgba(0, 180, 255, 0.3) !important;
+    color: #F0F6FF !important;
+    font-family: var(--sans) !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7) !important;
+    padding: 6px 10px !important;
+}
+.custom-map-tooltip::before {
+    border-top-color: rgba(10, 18, 32, 0.95) !important;
+}
 
 .search-clear-btn {
     background: none;
@@ -583,7 +870,7 @@ html, body {
 /* Search Results Dropdown */
 .search-results-dropdown {
     position: absolute;
-    top: 116px;
+    top: 154px;
     left: 14px;
     right: 14px;
     max-height: 340px;
