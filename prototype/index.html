@@ -3,209 +3,243 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>NAVISENSE-IDR | SIH 2026 — PS 26168</title>
-    <meta name="description" content="NavIC Intelligent Dead Reckoning System — SIH 2026 Problem Statement 26168" />
+    <title>NAVISENSE-IDR | AI-Powered Navigation · SIH 2026</title>
+    <meta name="description" content="NavIC Intelligent Dead Reckoning — AI-powered GPS navigation with EKF fusion, IMU sensors & map matching. SIH 2026 Problem Statement 26168." />
+    <meta name="theme-color" content="#060B14" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="navisense.css?v=2.5" />
+    <link rel="stylesheet" href="navisense.css?v=4.0" />
 </head>
 <body>
 
-<!-- PERSISTENT MAP (shared background for home/route/nav/dr/recovery screens) -->
+<!-- ============================================================ -->
+<!-- PERSISTENT MAP (shared background for all map screens)      -->
+<!-- ============================================================ -->
 <div id="map" class="persistent-map"></div>
 
 <!-- ============================================================ -->
-<!-- TOAST NOTIFICATION -->
+<!-- TOAST NOTIFICATION                                           -->
 <!-- ============================================================ -->
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <!-- ============================================================ -->
-<!-- STATUS BAR (always visible) -->
+<!-- STATUS BAR (always visible — top chrome)                    -->
 <!-- ============================================================ -->
-<div class="status-bar">
-    <span id="status-clock" class="status-clock">12:00</span>
+<header class="status-bar" role="banner">
+    <span id="status-clock" class="status-clock" aria-label="Current time">12:00</span>
     <div class="status-center">
-        <span id="gps-badge" class="gps-badge waiting">⏳ GPS WAITING</span>
+        <span id="gps-badge" class="gps-badge waiting" role="status" aria-label="GPS Status">⏳ GPS WAITING</span>
     </div>
-    <div class="status-right" style="display: flex; align-items: center; gap: 8px;">
-        <span id="net-badge" class="net-badge online" title="Network Connectivity">● ONLINE</span>
-        <button id="btn-debug" class="icon-btn" title="Debug Panel">⚙</button>
+    <div class="status-right">
+        <span id="net-badge" class="net-badge online" title="Network Connectivity" aria-label="Network status">● ONLINE</span>
+        <button id="btn-debug" class="icon-btn" title="Field Test Telemetry" aria-label="Open Debug Panel">⚙</button>
     </div>
-</div>
+</header>
 
 <!-- ============================================================ -->
-<!-- FLOATING "MY LOCATION" RECENTER BUTTON (Visible on Map Screens) -->
+<!-- FLOATING "MY LOCATION" FAB                                   -->
 <!-- ============================================================ -->
-<button id="btn-my-location" class="fab-my-location" title="My Location" aria-label="Recenter on My Location">
+<button id="btn-my-location" class="fab-my-location" title="Recenter on My Location" aria-label="My Location">
     <span class="my-loc-icon">🎯</span>
 </button>
 
 <!-- ============================================================ -->
-<!-- SCREEN 1: HOME / MAP -->
+<!-- SCREEN 1: HOME / MAP                                        -->
 <!-- ============================================================ -->
-<div id="screen-home" class="screen active map-screen">
+<main id="screen-home" class="screen active map-screen" role="main">
+
     <!-- Floating Top Search Bar -->
-    <div class="floating-search-bar" id="search-container">
-        <div class="search-profile-icon">🔍</div>
-        <input id="dest-input" class="search-input" type="text" placeholder="Search village, city, POI, landmark..." autocomplete="off" />
-        <button id="btn-search-clear" class="search-clear-btn" style="display: none;">✕</button>
+    <div class="floating-search-bar" id="search-container" role="search">
+        <div class="search-profile-icon" aria-hidden="true">🔍</div>
+        <input
+            id="dest-input"
+            class="search-input"
+            type="search"
+            placeholder="Search village, city, POI, landmark..."
+            autocomplete="off"
+            aria-label="Search destination"
+            spellcheck="false"
+        />
+        <button id="btn-search-clear" class="search-clear-btn" style="display:none;" aria-label="Clear search">✕</button>
     </div>
 
     <!-- Search Results Dropdown -->
-    <div id="search-results" class="search-results-dropdown" style="display: none;"></div>
+    <div id="search-results" class="search-results-dropdown" style="display:none;" role="listbox" aria-label="Search results"></div>
 
-    <!-- Home Bottom Sheet (Demo Corridors & Story Flow) -->
-    <div class="home-bottom-sheet">
-        <div class="sheet-handle"></div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div class="sheet-title">Demo Corridors (Simulation Only)</div>
-            <button id="btn-story-flow" class="btn-story-tag" style="background: rgba(16, 185, 129, 0.2); color: #34D399; border: 1px solid #10B981; border-radius: 12px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer;">📖 Prototype கதை</button>
+    <!-- Home Bottom Sheet -->
+    <div class="home-bottom-sheet" role="complementary" aria-label="Demo corridors">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div>
+                <div class="sheet-title">Demo Corridors</div>
+                <div class="sheet-subtitle">Select a corridor to test GNSS Blackout &amp; Dead Reckoning</div>
+            </div>
+            <button id="btn-story-flow" class="btn-story-tag"
+                style="background:rgba(16,185,129,0.12); color:#34D399; border:1px solid rgba(16,185,129,0.35); border-radius:14px; padding:6px 12px; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap;"
+                aria-label="View prototype story">
+                📖 How It Works
+            </button>
         </div>
-        <div class="sheet-subtitle">Select a corridor to test GNSS Blackout & Dead Reckoning</div>
-        <div id="preset-buttons" class="preset-list"></div>
+        <div id="preset-buttons" class="preset-list" role="list"></div>
     </div>
 
-    <!-- PROTOTYPE STORY FLOW MODAL (Tamil Concept Story) -->
-    <div id="story-modal" class="story-modal" style="display: none;">
+    <!-- PROTOTYPE STORY MODAL -->
+    <div id="story-modal" class="story-modal" style="display:none;" role="dialog" aria-modal="true" aria-label="How NAVISENSE-IDR works">
         <div class="story-modal-content">
             <div class="story-modal-header">
-                <div class="story-modal-title">🚗 NAVISENSE-IDR — Prototype கதை</div>
-                <button id="btn-close-story" class="story-modal-close">✕</button>
+                <div class="story-modal-title">🚗 NAVISENSE-IDR — How It Works</div>
+                <button id="btn-close-story" class="story-modal-close" aria-label="Close modal">✕</button>
             </div>
-            <div class="story-subtitle-tag">நமது செயலி எப்படி 10 படிநிலைகளில் வேலை செய்கிறது:</div>
+            <p class="story-subtitle-tag">10 steps from GPS to AI-powered dead reckoning:</p>
             <div class="story-steps-container">
                 <div class="story-step-item">
                     <div class="story-step-num">1</div>
                     <div class="story-step-body">
-                        <div class="story-step-title">📍 தொடங்கும் இடம் & இலக்கு தேர்வு</div>
-                        <div class="story-step-desc">முதலில் பயனர் செயலியில் தொடங்கும் இடத்தையும், செல்ல வேண்டிய இடத்தையும் தேர்வு செய்கிறார்.</div>
+                        <div class="story-step-title">📍 Origin &amp; Destination Selection</div>
+                        <div class="story-step-desc">User selects start location and destination. GPS fix is acquired as the authoritative position source.</div>
                     </div>
                 </div>
                 <div class="story-step-item">
                     <div class="story-step-num">2</div>
                     <div class="story-step-body">
-                        <div class="story-step-title">🚗 பயணம் தொடங்குதல்</div>
-                        <div class="story-step-desc">அதற்குப் பிறகு வாகனம் பயணத்தைத் தொடங்குகிறது.</div>
+                        <div class="story-step-title">🚗 Journey Begins</div>
+                        <div class="story-step-desc">Navigation starts. The vehicle puck follows the calculated route in real-time.</div>
                     </div>
                 </div>
                 <div class="story-step-item">
                     <div class="story-step-num">3</div>
                     <div class="story-step-body">
-                        <div class="story-step-title">🟢 GNSS இணைப்பு உள்ளது</div>
-                        <div class="story-step-desc">ஆரம்பத்தில் GNSS சமிக்ஞை சரியாகக் கிடைத்துக்கொண்டே இருக்கும். அதனால் வாகனத்தின் இருப்பிடம் வரைபடத்தில் சரியாகக் காட்டப்படும்.</div>
+                        <div class="story-step-title">🟢 GNSS Signal Active</div>
+                        <div class="story-step-desc">NavIC/GPS satellites provide accurate positioning. Vehicle puck displays exact real-world coordinates.</div>
                     </div>
                 </div>
                 <div class="story-step-item">
                     <div class="story-step-num">4</div>
                     <div class="story-step-body">
-                        <div class="story-step-title">🔴 சுரங்கப்பாதை & GNSS துண்டிப்பு</div>
-                        <div class="story-step-desc">வாகனம் ஒரு சுரங்கப்பாதைக்குள் செல்லும்போது திடீரென்று GNSS சமிக்ஞை துண்டிக்கப்படுகிறது. ஆனால் வாகனம் நின்றுவிடாது!</div>
+                        <div class="story-step-title">🔴 Tunnel / GNSS Signal Loss</div>
+                        <div class="story-step-desc">Vehicle enters a tunnel or GNSS-denied zone. Satellite signal drops to zero. The vehicle does NOT stop.</div>
                     </div>
                 </div>
                 <div class="story-step-item">
                     <div class="story-step-num">5</div>
                     <div class="story-step-body">
-                        <div class="story-step-title">🧠 AI & IMU உணரிகள் செயல்படுதல்</div>
-                        <div class="story-step-desc">முடுக்கமானி (Accelerometer), சுழற்சி உணரி (Gyroscope) போன்ற IMU உணரிகளிலிருந்து வரும் தகவல்களை செயற்கை நுண்ணறிவு (AI) பகுப்பாய்வு செய்கிறது.</div>
+                        <div class="story-step-title">🧠 AI + IMU Sensors Engage</div>
+                        <div class="story-step-desc">Accelerometer, gyroscope, and magnetometer data is processed by the GRU neural network for velocity estimation.</div>
                     </div>
                 </div>
                 <div class="story-step-item">
                     <div class="story-step-num">6</div>
                     <div class="story-step-body">
-                        <div class="story-step-title">📍 இறந்த-கணிப்பு (Dead Reckoning)</div>
-                        <div class="story-step-desc">GNSS சமிக்ஞை இல்லையென்றாலும், வாகனம் இப்போது எங்கே இருக்கிறது என்பதை AI தொடர்ந்து கணித்து வரைபடத்தில் காட்டும்.</div>
+                        <div class="story-step-title">📍 Dead Reckoning Active</div>
+                        <div class="story-step-desc">Even without GPS, the system continuously estimates position using IMU + AI. The vehicle puck keeps moving accurately.</div>
                     </div>
                 </div>
                 <div class="story-step-item">
                     <div class="story-step-num">7</div>
                     <div class="story-step-body">
-                        <div class="story-step-title">🗺️ வரைபடத் திருத்தம் (Map Matching & EKF)</div>
-                        <div class="story-step-desc">கணிக்கப்பட்ட பாதையை சாலை வரைபடம் மற்றும் வாகனத்தின் இயல்பான கட்டுப்பாடுகள் வைத்து சரிபார்த்து திருத்தும்.</div>
+                        <div class="story-step-title">🗺️ Map Matching + EKF Fusion</div>
+                        <div class="story-step-desc">Extended Kalman Filter fuses AI predictions with road geometry constraints to minimize drift.</div>
                     </div>
                 </div>
                 <div class="story-step-item">
                     <div class="story-step-num">8</div>
                     <div class="story-step-body">
-                        <div class="story-step-title">🚗 தொடர்ந்து நகர்தல்</div>
-                        <div class="story-step-desc">சுரங்கத்திற்குள் சென்றாலும் வரைபடத்தில் வாகனம் தொடர்ந்து நகர்ந்துகொண்டே இருக்கும்.</div>
+                        <div class="story-step-title">🚗 Continuous Movement</div>
+                        <div class="story-step-desc">Navigation continues seamlessly through the tunnel. Position accuracy degrades gracefully over time.</div>
                     </div>
                 </div>
                 <div class="story-step-item">
                     <div class="story-step-num">9</div>
                     <div class="story-step-body">
-                        <div class="story-step-title">🟢 GNSS மீண்டும் கிடைத்தல்</div>
-                        <div class="story-step-desc">சுரங்கத்திலிருந்து வெளியே வந்ததும் GNSS சமிக்ஞை மீண்டும் கிடைக்கிறது.</div>
+                        <div class="story-step-title">🟢 GNSS Signal Restored</div>
+                        <div class="story-step-desc">Vehicle exits the tunnel. Satellite signals are reacquired. System begins smooth re-synchronization.</div>
                     </div>
                 </div>
                 <div class="story-step-item">
                     <div class="story-step-num">10</div>
                     <div class="story-step-body">
-                        <div class="story-step-title">🔄 சீரான ஒத்திசைவு (Smooth Recovery)</div>
-                        <div class="story-step-desc">திடீரென்று குதிக்காமல், மெதுவாகவும் சரியாகவும் மீண்டும் GNSS வழிசெலுத்தலுக்கு மாறும்.</div>
+                        <div class="story-step-title">🔄 Smooth Recovery</div>
+                        <div class="story-step-desc">Position blends gradually from DR estimate to authoritative GPS — no jarring jumps on the map.</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Bottom Navigation (App-level) -->
-    <div class="app-bottom-nav" id="app-bottom-nav">
-        <div class="nav-item active" data-tab="explore"><span class="icon">📍</span><span class="label">Explore</span></div>
-        <div class="nav-item" data-tab="go"><span class="icon">🚗</span><span class="label">Go</span></div>
-        <div class="nav-item" data-tab="saved"><span class="icon">🔖</span><span class="label">Saved</span></div>
-        <div class="nav-item" data-tab="contribute"><span class="icon">➕</span><span class="label">Contribute</span></div>
-        <div class="nav-item" data-tab="updates"><span class="icon">🔔</span><span class="label">Updates</span></div>
-    </div>
-</div>
+    <!-- App Bottom Navigation -->
+    <nav class="app-bottom-nav" id="app-bottom-nav" role="navigation" aria-label="Main navigation">
+        <div class="nav-item active" data-tab="explore" role="button" tabindex="0" aria-label="Explore map">
+            <span class="icon">📍</span><span class="label">Explore</span>
+        </div>
+        <div class="nav-item" data-tab="go" role="button" tabindex="0" aria-label="Start navigation">
+            <span class="icon">🚗</span><span class="label">Go</span>
+        </div>
+        <div class="nav-item" data-tab="saved" role="button" tabindex="0" aria-label="Saved corridors">
+            <span class="icon">🔖</span><span class="label">Saved</span>
+        </div>
+        <div class="nav-item" data-tab="contribute" role="button" tabindex="0" aria-label="Contribute data">
+            <span class="icon">➕</span><span class="label">Contribute</span>
+        </div>
+        <div class="nav-item" data-tab="updates" role="button" tabindex="0" aria-label="Updates">
+            <span class="icon">🔔</span><span class="label">Updates</span>
+        </div>
+    </nav>
+</main>
 
 <!-- ============================================================ -->
-<!-- SCREEN 2: ROUTE SELECTION -->
+<!-- SCREEN 2: ROUTE SELECTION                                   -->
 <!-- ============================================================ -->
-<div id="screen-route" class="screen map-screen">
+<div id="screen-route" class="screen map-screen" role="region" aria-label="Route Selection">
     <!-- Floating Top Search Bar (Route Mode) -->
-    <div class="floating-search-bar" style="border-radius: 16px; flex-direction: column; align-items: stretch; padding: 14px;">
-        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
-            <button id="btn-route-back" style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer;">←</button>
+    <div class="floating-search-bar" style="border-radius:20px; flex-direction:column; align-items:stretch; padding:14px 16px; gap:0;">
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+            <button id="btn-route-back" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:white; font-size:18px; cursor:pointer; border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s;" aria-label="Go back">←</button>
             <div style="flex:1;">
-                <input id="route-origin-display" class="search-input" type="text" value="📍 Your Location" readonly style="width:100%; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; font-size: 14px;" />
+                <div style="font-size:9px; color:#64748B; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">FROM</div>
+                <input id="route-origin-display" class="search-input" type="text" value="📍 Your Location" readonly
+                    style="width:100%; font-size:13px; color:rgba(255,255,255,0.7); padding:0;" aria-label="Origin location" />
             </div>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <div style="width: 20px; text-align: center; color: #EF4444; font-size: 16px;">📍</div>
+        <div style="height:1px; background:rgba(255,255,255,0.07); margin-bottom:10px; margin-left:44px;"></div>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <div style="width:34px; text-align:center; color:#EF4444; font-size:18px; flex-shrink:0;">📍</div>
             <div style="flex:1;">
-                <input id="route-dest-display" class="search-input" type="text" value="Selected Destination" readonly style="width:100%; font-size: 14px; font-weight: 600;" />
+                <div style="font-size:9px; color:#64748B; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">TO</div>
+                <input id="route-dest-display" class="search-input" type="text" value="Selected Destination" readonly
+                    style="width:100%; font-size:14px; font-weight:700; color:#F0F6FF; padding:0;" aria-label="Destination" />
             </div>
         </div>
     </div>
 
     <!-- Route Bottom Sheet -->
-    <div class="home-bottom-sheet" style="bottom: 0;">
+    <div class="home-bottom-sheet" style="bottom:0;">
         <div class="sheet-handle"></div>
-        
-        <div id="route-status" class="route-status" style="color: var(--text2); font-size: 12px; margin-bottom: 8px;">Calculating route...</div>
-        
-        <div class="route-selected-info-row" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px;">
-            <span id="selected-route-info" class="selected-route-info" style="font-size: 22px; font-weight: 800; color: #34C759;">-- min (--- km)</span>
-            <div id="fallback-route-warning" style="display: none; font-size: 11px; color: #FF9F0A;">⚠️ Offline Direct Line</div>
+
+        <div id="route-status" class="route-status" role="status">Calculating route...</div>
+
+        <div class="route-selected-info-row">
+            <span id="selected-route-info" class="selected-route-info">-- min (--- km)</span>
+            <div id="fallback-route-warning" style="display:none; font-size:11px; color:var(--amber); font-weight:700;">⚠️ Offline Direct Line</div>
         </div>
 
-        <!-- Route Alternatives List -->
-        <div id="route-list" class="route-list" style="max-height: 160px; overflow-y: auto; margin-bottom: 12px;"></div>
+        <!-- Route Alternatives -->
+        <div id="route-list" class="route-list" style="max-height:160px; overflow-y:auto; margin-bottom:14px;"></div>
 
-        <button id="btn-start-nav" class="btn-primary btn-large" style="width: 100%; padding: 15px; border-radius: 20px; font-size: 17px; font-weight: 800; background: #0A84FF; color: white; border: none; cursor: pointer;">
-            Start Navigation
+        <button id="btn-start-nav" class="btn-primary btn-large" aria-label="Start Navigation">
+            ▶ Start Navigation
         </button>
     </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- SCREEN 3: NAVIGATION (GPS Active) -->
+<!-- SCREEN 3: NAVIGATION (GPS Active)                           -->
 <!-- ============================================================ -->
-<div id="screen-navigation" class="screen map-screen">
+<div id="screen-navigation" class="screen map-screen" role="region" aria-label="Live Navigation">
+
     <!-- GPS Lost / Recovery Banner -->
-    <div class="gps-lost-banner" id="banner-gps-lost" style="display: none;">
+    <div class="gps-lost-banner" id="banner-gps-lost" style="display:none;" role="alert" aria-live="assertive">
         <div class="gps-lost-icon-wrap">
             <span class="gps-lost-icon" id="dr-banner-icon">🔴</span>
         </div>
@@ -214,22 +248,22 @@
             <div class="gps-lost-sub" id="dr-banner-sub">Switching to Intelligent Dead Reckoning (IMU + AI)...</div>
         </div>
     </div>
-    
-    <!-- DR Floating Badge (Right side) -->
-    <div class="dr-floating-badge" id="dr-floating-badge" style="display: none;">
+
+    <!-- DR Floating Badge (clickable — opens diagnostics) -->
+    <div class="dr-floating-badge" id="dr-floating-badge" style="display:none;" role="button" tabindex="0" aria-label="Dead Reckoning active — tap for diagnostics">
         <span class="dr-text">DR</span>
         <span class="dr-status">ON</span>
     </div>
 
-    <!-- Diagnostics Panel -->
-    <div class="diagnostics-panel" id="diagnostics-panel" style="display: none;">
+    <!-- Diagnostics Panel (Navigation Screen) -->
+    <div class="diagnostics-panel" id="diagnostics-panel" style="display:none;" role="region" aria-label="Dead Reckoning Diagnostics">
         <div class="diag-header">
             <div class="diag-icon">⚙️</div>
             <div class="diag-title-wrap">
                 <div class="diag-title">Intelligent Dead Reckoning</div>
-                <div class="diag-sub">Using IMU + AI + EKF + Map Matching</div>
+                <div class="diag-sub">IMU + AI + EKF + Map Matching</div>
             </div>
-            <button id="btn-close-diag" class="diag-close-btn" title="Close Panel" aria-label="Close Diagnostics Panel">✕</button>
+            <button id="btn-close-diag" class="diag-close-btn" title="Close Panel" aria-label="Close Diagnostics">✕</button>
         </div>
         <div class="diag-list">
             <div class="diag-item">
@@ -238,13 +272,13 @@
                     <div class="diag-item-title">IMU Data Stream</div>
                     <div class="diag-item-sub" id="diag-imu-stream">ax: 0.00 | ay: 0.00 | gz: 0.00</div>
                 </div>
-                <div class="diag-item-status" id="diag-imu-status"><span class="calc-pulse">⚡</span> CALC</div>
+                <div class="diag-item-status" id="diag-imu-status"><span class="calc-pulse">⚡</span> LIVE</div>
             </div>
             <div class="diag-item">
                 <div class="diag-item-icon">🧠</div>
                 <div class="diag-item-text">
                     <div class="diag-item-title">AI Velocity Model</div>
-                    <div class="diag-item-sub" id="diag-ai-stream">v_est: 45 km/h | conf: 95%</div>
+                    <div class="diag-item-sub" id="diag-ai-stream">v_est: 22 km/h | conf: 95%</div>
                 </div>
                 <div class="diag-item-status" id="diag-ai-status"><span class="calc-pulse">⚡</span> CALC</div>
             </div>
@@ -254,7 +288,7 @@
                     <div class="diag-item-title">EKF State Fusion</div>
                     <div class="diag-item-sub" id="diag-ekf-stream">drift: 0.00m | t: 0.0s</div>
                 </div>
-                <div class="diag-item-status" id="diag-ekf-status"><span class="calc-pulse">⚡</span> CALC</div>
+                <div class="diag-item-status" id="diag-ekf-status"><span class="calc-pulse">⚡</span> FUSE</div>
             </div>
             <div class="diag-item">
                 <div class="diag-item-icon">🗺️</div>
@@ -262,33 +296,34 @@
                     <div class="diag-item-title">Map Matching</div>
                     <div class="diag-item-sub" id="diag-map-stream">snap: road segment #1</div>
                 </div>
-                <div class="diag-item-status" id="diag-map-status"><span class="calc-pulse">⚡</span> CALC</div>
+                <div class="diag-item-status" id="diag-map-status"><span class="calc-pulse">⚡</span> SNAP</div>
             </div>
         </div>
         <div class="diag-footer">
-            <span class="diag-footer-icon">🔄</span> <span id="diag-footer-text">Bounded DR Active (Max 5 mins) — Live Telemetry Streaming</span>
+            <span class="diag-footer-icon">🔄</span>
+            <span id="diag-footer-text">Bounded DR Active (Max 5 mins) — Live Telemetry</span>
         </div>
     </div>
 
     <!-- Arrival Overlay -->
-    <div id="arrival-overlay" class="arrival-overlay" style="display: none;">
+    <div id="arrival-overlay" class="arrival-overlay" style="display:none;" role="dialog" aria-modal="true">
         <div class="arrival-icon">🏁</div>
         <div class="arrival-title">You have arrived!</div>
         <div class="arrival-dest" id="arrival-dest-name">Destination</div>
-        <button class="btn btn-primary" id="btn-view-results">View Trip Results</button>
+        <button class="btn btn-primary" id="btn-view-results" style="max-width:280px; margin-top:8px;">View Trip Results</button>
     </div>
 
     <!-- Navigation Header (Turn-by-turn) -->
-    <div class="nav-header">
+    <div class="nav-header" role="navigation" aria-label="Turn-by-turn instructions">
         <div class="maneuver-panel">
-            <div id="maneuver-icon" class="maneuver-icon">↑</div>
+            <div id="maneuver-icon" class="maneuver-icon" aria-hidden="true">↑</div>
             <div class="maneuver-text">
                 <div id="maneuver-instruction" class="maneuver-instruction">Follow the road</div>
                 <div id="nav-dest-name" class="nav-dest-name">Destination</div>
             </div>
         </div>
         <div class="nav-mode-row">
-            <div class="gps-signal-bars">
+            <div class="gps-signal-bars" aria-hidden="true">
                 <span class="signal-bar"></span>
                 <span class="signal-bar"></span>
                 <span class="signal-bar"></span>
@@ -298,17 +333,17 @@
         </div>
     </div>
 
-    <!-- Left HUD: Speed -->
-    <div class="speed-hud">
+    <!-- Speed HUD (Left) -->
+    <div class="speed-hud" role="complementary" aria-label="Speed display">
         <div class="speed-val" id="nav-speed">0</div>
         <div class="speed-unit">km/h</div>
-        <div class="speed-limit-badge">
+        <div class="speed-limit-badge" title="Speed limit" aria-label="Speed limit">
             <span id="nav-speed-limit">60</span>
         </div>
     </div>
 
-    <!-- Right HUD: Sensor Data -->
-    <div class="sensor-hud">
+    <!-- Sensor HUD (Right) -->
+    <div class="sensor-hud" role="complementary" aria-label="IMU Sensor readings">
         <div class="sensor-row">
             <span class="sensor-label">Accel X</span>
             <span id="hud-ax" class="sensor-val">0.00</span>
@@ -324,8 +359,8 @@
         <div class="sensor-source-badge" id="hud-sensor-type">📱 IMU</div>
     </div>
 
-    <!-- Unified Bottom Sheet -->
-    <div class="nav-bottom-sheet">
+    <!-- Navigation Bottom Sheet -->
+    <div class="nav-bottom-sheet" role="complementary" aria-label="Navigation metrics">
         <div class="bottom-metrics-grid">
             <div class="b-metric">
                 <div class="b-label" id="bm-1-lbl">Speed</div>
@@ -343,75 +378,75 @@
 
         <div class="bottom-mode-row">
             <div class="mode-info">
-                <div class="b-label">GPS Status</div>
+                <div class="b-label">Positioning Mode</div>
                 <div class="mode-pill gps" id="current-mode-pill">GPS WAITING</div>
             </div>
-            <div class="conf-info" id="conf-info-container" style="display: none;">
-                <div class="b-label">Confidence</div>
+            <div class="conf-info" id="conf-info-container" style="display:none;">
+                <div class="b-label">AI Confidence</div>
                 <div class="b-val" id="bm-conf-val">--</div>
             </div>
         </div>
 
-        <!-- Controls Row -->
-        <div class="nav-controls" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);">
-            <div class="sim-speed-group" id="sim-speed-wrapper">
+        <!-- Controls -->
+        <div class="nav-controls">
+            <div class="sim-speed-group" id="sim-speed-wrapper" title="Simulation Speed">
                 <span class="sim-label">SIM</span>
-                <button class="sim-speed-btn active" data-speed="1">1×</button>
-                <button class="sim-speed-btn" data-speed="2">2×</button>
-                <button class="sim-speed-btn" data-speed="5">5×</button>
+                <button class="sim-speed-btn active" data-speed="1" aria-label="1x speed">1×</button>
+                <button class="sim-speed-btn" data-speed="2" aria-label="2x speed">2×</button>
+                <button class="sim-speed-btn" data-speed="5" aria-label="5x speed">5×</button>
             </div>
-            <button id="btn-sim-gps-action" class="btn-danger btn-sm">📵 GPS Loss</button>
-            <button id="btn-end-nav" class="btn-outline btn-sm">✕ End</button>
+            <button id="btn-sim-gps-action" class="btn-danger btn-sm" aria-label="Simulate GPS Loss">📵 GPS Loss</button>
+            <button id="btn-end-nav" class="btn-outline btn-sm" aria-label="End Navigation">✕ End</button>
         </div>
     </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- SCREEN 4: GPS LOST / INTELLIGENT DEAD RECKONING -->
+<!-- SCREEN 4: GPS LOST / INTELLIGENT DEAD RECKONING            -->
 <!-- ============================================================ -->
-<div id="screen-dr" class="screen map-screen">
-    <!-- GPS Lost Banner -->
-    <div class="gps-lost-banner" id="banner-gps-lost">
+<div id="screen-dr" class="screen map-screen" role="region" aria-label="Dead Reckoning Mode">
+
+    <!-- GPS Lost Banner (DR Screen) -->
+    <div class="gps-lost-banner" id="banner-gps-lost-dr" role="alert">
         <div class="gps-lost-icon-wrap">
             <span class="gps-lost-icon">📵</span>
         </div>
         <div class="gps-lost-text">
-            <div class="gps-lost-title" id="dr-banner-title">GPS Signal Lost</div>
-            <div class="gps-lost-sub" id="dr-banner-sub">Switching to Intelligent Dead Reckoning...</div>
+            <div class="gps-lost-title">GPS Signal Lost</div>
+            <div class="gps-lost-sub">Switching to Intelligent Dead Reckoning...</div>
         </div>
     </div>
-    
-    <!-- DR Floating Badge (Right side) -->
-    <div class="dr-floating-badge">
+
+    <!-- DR Floating Badge (DR Screen) -->
+    <div class="dr-floating-badge" role="status" aria-label="Dead Reckoning active">
         <span class="dr-text">DR</span>
         <span class="dr-status">ON</span>
     </div>
 
-    <!-- Diagnostics Panel -->
-    <div class="diagnostics-panel" id="diagnostics-panel-dr" style="display: none;">
+    <!-- Diagnostics Panel (DR Screen) -->
+    <div class="diagnostics-panel" id="diagnostics-panel-dr" style="display:none;" role="region" aria-label="Dead Reckoning Diagnostics">
         <div class="diag-header">
             <div class="diag-icon">⚙️</div>
             <div class="diag-title-wrap">
                 <div class="diag-title">Intelligent Dead Reckoning</div>
-                <div class="diag-sub">Using IMU + AI + EKF + Map Matching</div>
+                <div class="diag-sub">IMU + AI + EKF + Map Matching</div>
             </div>
-            <button id="btn-close-diag-dr" class="diag-close-btn" title="Close Panel" aria-label="Close Diagnostics Panel">✕</button>
+            <button id="btn-close-diag-dr" class="diag-close-btn" title="Close Panel" aria-label="Close Diagnostics">✕</button>
         </div>
-        
         <div class="diag-list">
             <div class="diag-item">
                 <div class="diag-item-icon">💡</div>
                 <div class="diag-item-text">
                     <div class="diag-item-title">IMU Data</div>
-                    <div class="diag-item-sub">(Accelerometer + Gyro)</div>
+                    <div class="diag-item-sub">Accelerometer + Gyro</div>
                 </div>
                 <div class="diag-item-status">✅</div>
             </div>
             <div class="diag-item">
                 <div class="diag-item-icon">🧠</div>
                 <div class="diag-item-text">
-                    <div class="diag-item-title">AI Model</div>
-                    <div class="diag-item-sub">(Velocity Estimation)</div>
+                    <div class="diag-item-title">AI GRU Model</div>
+                    <div class="diag-item-sub">Velocity Estimation</div>
                 </div>
                 <div class="diag-item-status">✅</div>
             </div>
@@ -419,7 +454,7 @@
                 <div class="diag-item-icon">📍</div>
                 <div class="diag-item-text">
                     <div class="diag-item-title">EKF / DR</div>
-                    <div class="diag-item-sub">(State Estimation)</div>
+                    <div class="diag-item-sub">State Estimation</div>
                 </div>
                 <div class="diag-item-status">✅</div>
             </div>
@@ -427,12 +462,11 @@
                 <div class="diag-item-icon">🗺️</div>
                 <div class="diag-item-text">
                     <div class="diag-item-title">Map Matching</div>
-                    <div class="diag-item-sub">(Road Constraint)</div>
+                    <div class="diag-item-sub">Road Constraints</div>
                 </div>
                 <div class="diag-item-status">✅</div>
             </div>
         </div>
-        
         <div class="diag-footer">
             <span class="diag-footer-icon">🔄</span>
             Bounded DR (Max 5 mins)
@@ -441,15 +475,15 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- SCREEN 5: GPS RECOVERY -->
+<!-- SCREEN 5: GPS RECOVERY                                      -->
 <!-- ============================================================ -->
-<div id="screen-recovery" class="screen">
+<div id="screen-recovery" class="screen" role="region" aria-label="GPS Recovery">
     <div class="recovery-card">
         <div class="recovery-icon">✅</div>
         <div class="recovery-title">GPS Signal Restored</div>
-        <div class="recovery-sub">Realigning position from Dead Reckoning...</div>
+        <div class="recovery-sub">Realigning position from Dead Reckoning estimate to authoritative GPS coordinates...</div>
 
-        <div class="recovery-progress-wrap">
+        <div class="recovery-progress-wrap" role="progressbar" aria-label="Recovery progress">
             <div class="recovery-progress-bar" id="recovery-bar"></div>
         </div>
 
@@ -469,24 +503,25 @@
         </div>
 
         <div class="recovery-label-row">
-            <span class="dr-ai-label-chip">Authoritative Real GPS Active</span>
+            <span class="dr-ai-label-chip">✅ Authoritative Real GPS Active</span>
         </div>
     </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- SCREEN 6: FIELD TEST DEBUG PANEL -->
+<!-- SCREEN 6: FIELD TEST TELEMETRY DEBUG PANEL                 -->
 <!-- ============================================================ -->
-<div id="screen-debug" class="screen">
+<div id="screen-debug" class="screen" role="region" aria-label="Field Test Telemetry">
     <div class="debug-panel">
         <div class="screen-header">
-            <button id="btn-debug-back" class="back-btn">←</button>
-            <span class="screen-title">Field Test Telemetry</span>
+            <button id="btn-debug-back" class="back-btn" aria-label="Go back">←</button>
+            <h1 class="screen-title">Field Test Telemetry</h1>
         </div>
 
-        <div class="debug-section">
+        <!-- Real GPS Telemetry -->
+        <section class="debug-section">
             <div class="debug-section-title">📡 Real GPS Telemetry</div>
-            <div class="debug-table">
+            <div class="debug-table" role="table">
                 <div class="debug-row"><span>GPS Status</span><span id="dbg-gps-status">—</span></div>
                 <div class="debug-row"><span>Latitude</span><span id="dbg-lat">—</span></div>
                 <div class="debug-row"><span>Longitude</span><span id="dbg-lng">—</span></div>
@@ -497,10 +532,11 @@
                 <div class="debug-row"><span>Timestamp</span><span id="dbg-timestamp">—</span></div>
                 <div class="debug-row"><span>Source</span><span id="dbg-source">—</span></div>
             </div>
-        </div>
+        </section>
 
-        <div class="debug-section">
-            <div class="debug-section-title">🗺️ Navigation & Route Telemetry</div>
+        <!-- Navigation & Route Telemetry -->
+        <section class="debug-section">
+            <div class="debug-section-title">🗺️ Navigation &amp; Route Telemetry</div>
             <div class="debug-table">
                 <div class="debug-row"><span>Destination Coords</span><span id="dbg-dest-coords">—</span></div>
                 <div class="debug-row"><span>Route Distance</span><span id="dbg-route-dist">—</span></div>
@@ -508,86 +544,90 @@
                 <div class="debug-row"><span>Route Deviation</span><span id="dbg-route-deviation">—</span></div>
                 <div class="debug-row"><span>Network Status</span><span id="dbg-network">—</span></div>
             </div>
-        </div>
+        </section>
 
-        <div class="debug-section">
+        <!-- IMU Sensors -->
+        <section class="debug-section">
             <div class="debug-section-title">📱 IMU Sensors</div>
             <div class="debug-table">
-                <div class="debug-row"><span>Accel X</span><span id="dbg-ax">—</span></div>
-                <div class="debug-row"><span>Accel Y</span><span id="dbg-ay">—</span></div>
-                <div class="debug-row"><span>Accel Z</span><span id="dbg-az">—</span></div>
-                <div class="debug-row"><span>Gyro X</span><span id="dbg-gx">—</span></div>
-                <div class="debug-row"><span>Gyro Y</span><span id="dbg-gy">—</span></div>
-                <div class="debug-row"><span>Gyro Z</span><span id="dbg-gz">—</span></div>
-                <div class="debug-row"><span>Type</span><span id="dbg-sensor-type">—</span></div>
+                <div class="debug-row"><span>Accel X (ax)</span><span id="dbg-ax">—</span></div>
+                <div class="debug-row"><span>Accel Y (ay)</span><span id="dbg-ay">—</span></div>
+                <div class="debug-row"><span>Accel Z (az)</span><span id="dbg-az">—</span></div>
+                <div class="debug-row"><span>Gyro X (gx)</span><span id="dbg-gx">—</span></div>
+                <div class="debug-row"><span>Gyro Y (gy)</span><span id="dbg-gy">—</span></div>
+                <div class="debug-row"><span>Gyro Z (gz)</span><span id="dbg-gz">—</span></div>
+                <div class="debug-row"><span>Sensor Type</span><span id="dbg-sensor-type">—</span></div>
             </div>
-        </div>
+        </section>
 
-        <div class="debug-section">
-            <div class="debug-section-title">🤖 Dead Reckoning & AI</div>
+        <!-- Dead Reckoning & AI -->
+        <section class="debug-section">
+            <div class="debug-section-title">🤖 Dead Reckoning &amp; AI</div>
             <div class="debug-table">
                 <div class="debug-row"><span>DR Active</span><span id="dbg-dr-active">—</span></div>
                 <div class="debug-row"><span>Blackout Time</span><span id="dbg-blackout-time">0.0s</span></div>
-                <div class="debug-row"><span>Drift</span><span id="dbg-drift">0.0m</span></div>
+                <div class="debug-row"><span>Estimated Drift</span><span id="dbg-drift">0.0m</span></div>
                 <div class="debug-row"><span>AI Confidence</span><span id="dbg-ai-conf">—</span></div>
             </div>
-        </div>
+        </section>
     </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- SCREEN 7: FINAL RESULTS -->
+<!-- SCREEN 7: SESSION RESULTS REPORT                            -->
 <!-- ============================================================ -->
-<div id="screen-results" class="screen">
+<div id="screen-results" class="screen" role="region" aria-label="Session Results">
     <div class="results-panel">
         <div class="results-header">
             <div class="results-logo">🛰️</div>
             <div class="results-title">NAVISENSE-IDR</div>
-            <div class="results-sub">SIH 2026 · PS 26168 · Session Report</div>
+            <div class="results-sub">SIH 2026 · PS 26168 · Session Performance Report</div>
         </div>
 
-        <div class="results-score-ring">
+        <!-- Score Ring -->
+        <div class="results-score-ring" role="img" aria-label="Overall score">
             <div class="results-score-val" id="res-score">--</div>
-            <div class="results-score-label">Overall Score</div>
+            <div class="results-score-label">OVERALL SCORE</div>
         </div>
 
-        <div class="results-metrics-grid">
-            <div class="result-metric">
+        <!-- Metrics Grid -->
+        <div class="results-metrics-grid" role="list">
+            <div class="result-metric" role="listitem">
                 <div class="result-metric-icon">🔴</div>
                 <div class="result-metric-val" id="res-blackout">—</div>
                 <div class="result-metric-label">GPS Blackout</div>
             </div>
-            <div class="result-metric">
+            <div class="result-metric" role="listitem">
                 <div class="result-metric-icon">📏</div>
                 <div class="result-metric-val" id="res-distance">—</div>
                 <div class="result-metric-label">Distance</div>
             </div>
-            <div class="result-metric">
+            <div class="result-metric" role="listitem">
                 <div class="result-metric-icon">📍</div>
                 <div class="result-metric-val" id="res-pos-error">—</div>
                 <div class="result-metric-label">Position Error</div>
             </div>
-            <div class="result-metric">
+            <div class="result-metric" role="listitem">
                 <div class="result-metric-icon">📉</div>
                 <div class="result-metric-val" id="res-max-drift">—</div>
                 <div class="result-metric-label">Max Drift</div>
             </div>
-            <div class="result-metric">
+            <div class="result-metric" role="listitem">
                 <div class="result-metric-icon">⚡</div>
                 <div class="result-metric-val" id="res-speed-error">—</div>
                 <div class="result-metric-label">Speed Error</div>
             </div>
-            <div class="result-metric">
+            <div class="result-metric" role="listitem">
                 <div class="result-metric-icon">🧭</div>
                 <div class="result-metric-val" id="res-heading-error">—</div>
                 <div class="result-metric-label">Heading Error</div>
             </div>
-            <div class="result-metric">
+            <div class="result-metric" role="listitem">
                 <div class="result-metric-icon">⏱</div>
                 <div class="result-metric-val" id="res-recovery">—</div>
                 <div class="result-metric-label">Recovery Time</div>
             </div>
-            <div class="result-metric">
+            <div class="result-metric" role="listitem">
                 <div class="result-metric-icon">🤖</div>
                 <div class="result-metric-val" id="res-confidence">—</div>
                 <div class="result-metric-label">AI Confidence</div>
@@ -596,30 +636,31 @@
 
         <!-- Performance Chart -->
         <div class="results-chart-wrap">
-            <div class="chart-title">Confidence & Drift Timeline</div>
-            <canvas id="results-chart" class="results-chart"></canvas>
+            <div class="chart-title">Confidence &amp; Drift Timeline</div>
+            <canvas id="results-chart" class="results-chart" aria-label="Performance chart" role="img"></canvas>
             <div class="chart-legend">
                 <span class="legend-green">— Confidence</span>
                 <span class="legend-red">— — Drift</span>
             </div>
         </div>
 
+        <!-- Actions -->
         <div class="results-actions">
-            <button id="btn-results-again" class="btn-outline">🔄 Run Again</button>
-            <button id="btn-results-home" class="btn-primary">🏠 Home</button>
+            <button id="btn-results-again" class="btn-outline" aria-label="Run again">🔄 Run Again</button>
+            <button id="btn-results-home" class="btn-primary" aria-label="Return home">🏠 Home</button>
         </div>
 
         <div class="results-footer">
-            <span class="ai-label-chip">AI Model: GRU 2L×32u · IO-VNBD</span>
+            <span class="ai-label-chip">AI Model: GRU 2L×32u · IO-VNBD Dataset · NavIC/GPS Fusion</span>
         </div>
     </div>
 </div>
 
 <!-- ============================================================ -->
-<!-- LIBRARIES -->
+<!-- LIBRARIES                                                    -->
 <!-- ============================================================ -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="app.js?v=3.0"></script>
+<script type="module" src="app.js?v=4.0"></script>
 
 </body>
 </html>

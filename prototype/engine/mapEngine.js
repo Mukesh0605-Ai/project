@@ -28,25 +28,31 @@ export class MapEngine {
             tap: false
         }).setView([lat, lng], zoom);
 
-        // Google Maps tiles
-        L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-            subdomains: ['0', '1', '2', '3'],
+        // Dark Stadia Maps tile — premium dark navigation theme
+        // Primary: CartoDB Dark Matter (no API key needed, free tile)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            subdomains: 'abcd',
             maxZoom: 20,
-            attribution: '&copy; Google Maps'
+            attribution: '&copy; CartoDB'
         }).addTo(this.map);
 
-        // Route polylines
+        // Route polylines — electric blue glow
+        // Shadow/glow polyline behind the main route
+        this.routeGlowLayer = L.polyline([], {
+            color: '#00B4FF', weight: 14, opacity: 0.18, lineJoin: 'round', lineCap: 'round'
+        }).addTo(this.map);
+
         this.routeLayer = L.polyline([], {
-            color: '#1A73E8', weight: 6, opacity: 0.85, lineJoin: 'round'
+            color: '#1A73E8', weight: 5, opacity: 0.92, lineJoin: 'round', lineCap: 'round'
         }).addTo(this.map);
 
         this.traveledLayer = L.polyline([], {
-            color: '#059669', weight: 5, opacity: 0.9, lineJoin: 'round'
+            color: '#10B981', weight: 5, opacity: 0.95, lineJoin: 'round', lineCap: 'round'
         }).addTo(this.map);
 
         this.drLayer = L.polyline([], {
-            color: '#F59E0B', weight: 5, opacity: 0.85,
-            lineJoin: 'round', dashArray: '8, 4'
+            color: '#F59E0B', weight: 4, opacity: 0.9,
+            lineJoin: 'round', lineCap: 'round', dashArray: '10, 5'
         }).addTo(this.map);
 
         this.isInitialized = true;
@@ -58,25 +64,29 @@ export class MapEngine {
     }
 
     _createVehicleIcon(heading = 0, mode = 'GPS') {
-        const isDR = mode === 'DR';
-        const color = '#1A73E8'; // Always Blue for active driving vehicle
-        const opacity = '1.0';
+        // Active vehicle always blue (GPS, DR, or RECOVERY)
+        const color = '#1A73E8';
+        const glowColor = mode === 'DR' ? '#F59E0B' : mode === 'RECOVERY' ? '#10B981' : '#00B4FF';
 
         const carSvg = `
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(${heading}deg); transition: transform 0.15s ease; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.7));">
-            <path d="M12 2L17 7V17C17 18.1 16.1 19 15 19H9C7.9 19 7 18.1 7 17V7L12 2Z" fill="${color}" stroke="#FFFFFF" stroke-width="1.8"/>
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+             style="transform: rotate(${heading}deg); transition: transform 0.18s ease;
+                    filter: drop-shadow(0 3px 12px rgba(0,0,0,0.8)) drop-shadow(0 0 8px ${glowColor}88);">
+            <path d="M12 2L17 7V17C17 18.1 16.1 19 15 19H9C7.9 19 7 18.1 7 17V7L12 2Z"
+                  fill="${color}" stroke="#FFFFFF" stroke-width="1.8"/>
             <path d="M9 6H15M9 10H15M10 14H14" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
             <circle cx="12" cy="16.5" r="1.5" fill="white"/>
         </svg>`;
 
         return L.divIcon({
             className: '',
-            html: `<div class="vehicle-puck" style="--puck-color:${color}; opacity:${opacity}">
+            html: `<div class="vehicle-puck" style="--puck-color:${glowColor};">
                      <div class="puck-radar"></div>
+                     <div class="puck-radar-2"></div>
                      <div class="car-puck-body">${carSvg}</div>
                    </div>`,
-            iconSize: [52, 52],
-            iconAnchor: [26, 26]
+            iconSize: [56, 56],
+            iconAnchor: [28, 28]
         });
     }
 
@@ -177,14 +187,16 @@ export class MapEngine {
         this.routeLayer.setLatLngs([]);
         this.traveledLayer.setLatLngs([]);
         this.drLayer.setLatLngs([]);
+        if (this.routeGlowLayer) this.routeGlowLayer.setLatLngs([]);
         this.altRouteLayers.forEach(l => this.map.removeLayer(l));
         this.altRouteLayers = [];
         this.outageZoneLayers.forEach(l => this.map.removeLayer(l));
         this.outageZoneLayers = [];
 
         const latlngs = coords.map(c => [c.lat, c.lng]);
+        if (this.routeGlowLayer) this.routeGlowLayer.setLatLngs(latlngs);
         this.routeLayer.setLatLngs(latlngs);
-        
+
         try {
             this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50], maxZoom: 17 });
         } catch (e) {
@@ -200,11 +212,18 @@ export class MapEngine {
         this.altRouteLayers = [];
 
         routes.forEach((route, i) => {
-            const color = i === selectedIdx ? '#1A73E8' : (i === 1 ? '#0EA5E9' : '#F59E0B');
-            const weight = i === selectedIdx ? 6 : 4;
-            const opacity = i === selectedIdx ? 0.85 : 0.45;
+            // Selected: electric blue glow; alternatives: cyan / amber at low opacity
+            const color = i === selectedIdx ? '#1A73E8' : (i === 1 ? '#06B6D4' : '#F59E0B');
+            const weight = i === selectedIdx ? 5 : 3.5;
+            const opacity = i === selectedIdx ? 0.92 : 0.4;
             const latlngs = route.coords.map(c => [c.lat, c.lng]);
-            const poly = L.polyline(latlngs, { color, weight, opacity, lineJoin: 'round' }).addTo(this.map);
+
+            // Glow layer for selected route
+            if (i === selectedIdx) {
+                const glow = L.polyline(latlngs, { color: '#00B4FF', weight: 13, opacity: 0.16, lineJoin: 'round', lineCap: 'round' }).addTo(this.map);
+                this.altRouteLayers.push(glow);
+            }
+            const poly = L.polyline(latlngs, { color, weight, opacity, lineJoin: 'round', lineCap: 'round' }).addTo(this.map);
             this.altRouteLayers.push(poly);
         });
     }
