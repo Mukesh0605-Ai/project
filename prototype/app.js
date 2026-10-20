@@ -159,10 +159,27 @@ function showScreen(name) {
         // Keep navigation UI visible when in DR mode
         if (name === 'dr' && s.id === 'screen-navigation') return;
         s.classList.remove('active');
+        s.style.display = 'none';
     });
     const el = document.getElementById(`screen-${name}`);
-    if (el) el.classList.add('active');
+    if (el) {
+        el.classList.add('active');
+        el.style.display = 'flex';
+    }
     S.screen = name;
+
+    // During active navigation, hide search/planner card completely from frame
+    const searchContainer = $('search-container');
+    const searchResults = $('search-results');
+    const mapPickerBanner = $('map-picker-banner');
+
+    if (name === 'navigation' || name === 'dr' || name === 'recovery') {
+        if (searchContainer) searchContainer.style.display = 'none';
+        if (searchResults) searchResults.style.display = 'none';
+        if (mapPickerBanner) mapPickerBanner.style.display = 'none';
+    } else if (name === 'home') {
+        if (searchContainer) searchContainer.style.display = 'flex';
+    }
 
     const pm = document.getElementById('map');
     if (pm) pm.style.display = MAP_SCREENS.has(name) ? 'block' : 'none';
@@ -237,10 +254,12 @@ let lastFrameTime = null;
 let rafId = null;
 
 function startMainLoop() {
+    if (rafId) cancelAnimationFrame(rafId);
     lastFrameTime = performance.now();
     function loop(now) {
         if (!S.isNavigating) return;
-        const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+        if (!lastFrameTime) lastFrameTime = now;
+        const dt = Math.min(Math.max((now - lastFrameTime) / 1000, 0.016), 0.1);
         lastFrameTime = now;
         tick(dt);
         rafId = requestAnimationFrame(loop);
@@ -1023,12 +1042,9 @@ function startNavigation() {
 
     // Reset navigation state
     S.isNavigating = true;
-    if (!S.gpsIsLive || S.currentSpeed < 2) {
-        S.isSimulation = true;
-        if (!S.currentSpeed || S.currentSpeed < 5) {
-            S.currentSpeed = 22;
-        }
-    }
+    S.isSimulation = true; // Ensure active vehicle movement along the route
+    S.currentSpeed = (S.currentSpeed && S.currentSpeed > 20) ? S.currentSpeed : 48; // Smooth 48 km/h active driving speed
+    S.simSpeed = 1.0;
     S.isGPSLost = false;
     S.isRecovering = false;
     S.isArrived = false;
