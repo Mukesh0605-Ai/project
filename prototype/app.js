@@ -528,7 +528,12 @@ function triggerGPSLoss() {
     const badge = $('dr-floating-badge');
     if (badge) badge.style.display = 'flex';
     const diagPanel = $('diagnostics-panel');
-    if (diagPanel) diagPanel.style.display = 'block';
+    if (diagPanel) {
+        // On mobile/phone screens (<=768px), keep telemetry panel closed initially
+        // so it does NOT block the central location / vehicle puck on the map.
+        // User can tap the glowing red DR badge anytime to toggle telemetry details.
+        diagPanel.style.display = window.innerWidth <= 768 ? 'none' : 'block';
+    }
 
     T('dr-banner-icon', '🔴');
     T('dr-banner-title', '🔴 GNSS Signal Lost');
@@ -1342,11 +1347,28 @@ function wireEvents() {
     });
 
     // Diagnostics Panel Toggle
-    const drBadge = document.querySelector('.dr-floating-badge');
-    const diagPanel = $('diagnostics-panel');
-    if (drBadge && diagPanel) {
+    document.querySelectorAll('.dr-floating-badge').forEach(drBadge => {
         drBadge.addEventListener('click', () => {
-            diagPanel.style.display = (diagPanel.style.display === 'none' || diagPanel.style.display === '') ? 'block' : 'none';
+            const dp = $('diagnostics-panel') || $('diagnostics-panel-dr');
+            if (dp) {
+                dp.style.display = (dp.style.display === 'none' || dp.style.display === '') ? 'block' : 'none';
+            }
+        });
+    });
+
+    const btnCloseDiag = $('btn-close-diag');
+    if (btnCloseDiag) {
+        btnCloseDiag.addEventListener('click', () => {
+            const dp = $('diagnostics-panel');
+            if (dp) dp.style.display = 'none';
+        });
+    }
+
+    const btnCloseDiagDr = $('btn-close-diag-dr');
+    if (btnCloseDiagDr) {
+        btnCloseDiagDr.addEventListener('click', () => {
+            const dp = $('diagnostics-panel-dr');
+            if (dp) dp.style.display = 'none';
         });
     }
 

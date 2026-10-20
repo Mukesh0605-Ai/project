@@ -229,6 +229,7 @@
                 <div class="diag-title">Intelligent Dead Reckoning</div>
                 <div class="diag-sub">Using IMU + AI + EKF + Map Matching</div>
             </div>
+            <button id="btn-close-diag" class="diag-close-btn" title="Close Panel" aria-label="Close Diagnostics Panel">✕</button>
         </div>
         <div class="diag-list">
             <div class="diag-item">
@@ -387,13 +388,14 @@
     </div>
 
     <!-- Diagnostics Panel -->
-    <div class="diagnostics-panel" id="diagnostics-panel" style="display: none;">
+    <div class="diagnostics-panel" id="diagnostics-panel-dr" style="display: none;">
         <div class="diag-header">
             <div class="diag-icon">⚙️</div>
             <div class="diag-title-wrap">
                 <div class="diag-title">Intelligent Dead Reckoning</div>
                 <div class="diag-sub">Using IMU + AI + EKF + Map Matching</div>
             </div>
+            <button id="btn-close-diag-dr" class="diag-close-btn" title="Close Panel" aria-label="Close Diagnostics Panel">✕</button>
         </div>
         
         <div class="diag-list">

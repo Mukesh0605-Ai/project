@@ -1,0 +1,9 @@
+# Gradle
+.gradle/
+**/build/
+*.iml
+.idea/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
