@@ -205,21 +205,15 @@ html, body {
     box-shadow: 0 2px 14px rgba(0, 0, 0, 0.06);
 }
 
-/* Brand logo area */
-.status-bar::before {
-    content: 'NAVISENSE-IDR';
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    background: var(--grad-blue);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    pointer-events: none;
-    display: none; /* shown on larger screens via media query */
+/* Brand logo — explicit HTML element */
+.nav-logo {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: #1A73E8;
+    white-space: nowrap;
+    line-height: 1;
+    font-family: var(--mono);
 }
 
 .status-clock {
@@ -233,8 +227,9 @@ html, body {
 
 .status-center {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 2px;
 }
 
 /* GPS Badges */
@@ -592,22 +587,22 @@ html, body {
 }
 
 .planner-label {
-    font-size: 8.5px;
-    font-weight: 800;
-    letter-spacing: 1px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
     text-transform: uppercase;
     font-family: var(--mono);
-    margin-bottom: 1px;
+    margin-bottom: 2px;
 }
 
-.origin-row .planner-label { color: #059669; }
-.dest-row .planner-label { color: #DC2626; }
+.origin-row .planner-label { color: #047857; font-weight: 800; }
+.dest-row .planner-label { color: #B91C1C; font-weight: 800; }
 
 .planner-input {
     background: transparent;
     border: none;
     color: #0F172A;
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 600;
     font-family: var(--sans);
     padding: 0;
@@ -631,13 +626,13 @@ html, body {
 }
 
 .planner-icon-btn {
-    background: rgba(0, 0, 0, 0.04);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    color: #475569;
-    width: 28px;
-    height: 28px;
+    background: rgba(26, 115, 232, 0.08);
+    border: 1.5px solid rgba(26, 115, 232, 0.2);
+    color: #1A73E8;
+    width: 30px;
+    height: 30px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -646,10 +641,11 @@ html, body {
 }
 
 .planner-icon-btn:hover {
-    background: rgba(26, 115, 232, 0.1);
-    border-color: rgba(26, 115, 232, 0.3);
-    color: #1A73E8;
-    transform: scale(1.08);
+    background: rgba(26, 115, 232, 0.16);
+    border-color: rgba(26, 115, 232, 0.45);
+    color: #1565C0;
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(26, 115, 232, 0.25);
 }
 
 .planner-icon-btn:active {
@@ -937,10 +933,10 @@ html, body {
     position: absolute;
     bottom: 72px;
     left: 0; right: 0;
-    background: rgba(6, 11, 20, 0.97);
+    background: rgba(10, 16, 32, 0.97);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
-    border-top: 1px solid var(--glass-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 28px 28px 0 0;
     padding: 14px 18px 16px 18px;
     z-index: 90;
@@ -950,7 +946,7 @@ html, body {
 
 .sheet-handle {
     width: 36px; height: 4px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     border-radius: 2px;
     align-self: center;
     margin-bottom: 12px;
@@ -958,12 +954,12 @@ html, body {
 .sheet-title {
     font-size: 15px;
     font-weight: 800;
-    color: var(--text);
+    color: #F0F6FF;
     letter-spacing: 0.2px;
 }
 .sheet-subtitle {
     font-size: 11px;
-    color: var(--text3);
+    color: rgba(176, 196, 222, 0.85);
     margin-bottom: 12px;
 }
 
@@ -977,11 +973,11 @@ html, body {
 }
 
 .preset-btn {
-    background: var(--glass-light);
-    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 14px;
     padding: 13px 16px;
-    color: var(--text);
+    color: #E2EEFF;
     text-align: left;
     font-size: 13px;
     font-weight: 600;
@@ -1002,13 +998,14 @@ html, body {
     transition: opacity 0.2s;
 }
 .preset-btn:hover {
-    background: rgba(0, 180, 255, 0.08);
-    border-color: rgba(0, 180, 255, 0.25);
+    background: rgba(26, 115, 232, 0.14);
+    border-color: rgba(26, 115, 232, 0.35);
     transform: translateX(2px);
+    color: #FFFFFF;
 }
 .preset-btn:hover::before { opacity: 1; }
 .preset-btn:active {
-    background: rgba(0, 180, 255, 0.14);
+    background: rgba(26, 115, 232, 0.22);
     transform: scale(0.98);
 }
 
@@ -1017,8 +1014,8 @@ html, body {
     position: absolute;
     bottom: 0; left: 0; right: 0;
     height: 72px;
-    background: rgba(6, 11, 20, 0.98);
-    border-top: 1px solid var(--glass-border);
+    background: rgba(8, 13, 28, 0.98);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -1031,15 +1028,15 @@ html, body {
     flex-direction: column;
     align-items: center;
     gap: 3px;
-    color: var(--text3);
+    color: rgba(176, 196, 222, 0.7);
     cursor: pointer;
     padding: 6px 16px;
     border-radius: 14px;
     transition: all 0.22s ease;
     position: relative;
 }
-.app-bottom-nav .nav-item:hover { color: var(--text2); }
-.app-bottom-nav .nav-item.active { color: var(--blue-electric); }
+.app-bottom-nav .nav-item:hover { color: #C8D8F0; }
+.app-bottom-nav .nav-item.active { color: #60A5FA; }
 .app-bottom-nav .nav-item.active::after {
     content: '';
     position: absolute;
@@ -1049,12 +1046,12 @@ html, body {
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: var(--blue-electric);
-    box-shadow: 0 0 8px var(--blue-electric);
+    background: #60A5FA;
+    box-shadow: 0 0 8px rgba(96, 165, 250, 0.8);
 }
-.app-bottom-nav .nav-item .icon { font-size: 18px; transition: transform 0.2s; }
+.app-bottom-nav .nav-item .icon { font-size: 20px; transition: transform 0.2s; }
 .app-bottom-nav .nav-item.active .icon { transform: translateY(-1px); }
-.app-bottom-nav .nav-item .label { font-size: 10px; font-weight: 700; letter-spacing: 0.3px; }
+.app-bottom-nav .nav-item .label { font-size: 10px; font-weight: 700; letter-spacing: 0.3px; color: inherit; }
 
 /* Story flow button */
 .btn-story-tag {
@@ -1493,7 +1490,7 @@ html, body {
 }
 .sensor-label {
     font-size: 9.5px;
-    color: var(--text3);
+    color: rgba(176, 196, 222, 0.75);
     font-family: var(--mono);
     width: 44px;
     letter-spacing: 0.3px;
@@ -1521,7 +1518,7 @@ html, body {
     background: rgba(5, 10, 22, 0.97);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
-    border-top: 1px solid var(--glass-border);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 28px 28px 0 0;
     padding: 22px 18px 28px;
     z-index: 100;
@@ -1550,16 +1547,16 @@ html, body {
     text-align: center;
     flex: 1;
     padding: 10px 6px;
-    background: var(--glass-light);
-    border: 1px solid var(--glass-border2);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 14px;
     transition: border-color 0.2s;
 }
-.b-metric:hover { border-color: var(--border-blue); }
+.b-metric:hover { border-color: rgba(96, 165, 250, 0.4); }
 
 .b-label {
     font-size: 9.5px;
-    color: var(--text3);
+    color: rgba(176, 196, 222, 0.75);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.8px;
@@ -1568,7 +1565,7 @@ html, body {
 .b-val {
     font-size: 18px;
     font-weight: 800;
-    color: var(--text);
+    color: #F0F6FF;
     font-family: var(--mono);
     letter-spacing: -0.5px;
 }
@@ -1577,8 +1574,8 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--glass-light);
-    border: 1px solid var(--glass-border2);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 14px;
     padding: 12px 16px;
     margin-bottom: 14px;
@@ -1642,14 +1639,14 @@ html, body {
     display: flex;
     align-items: center;
     gap: 4px;
-    background: var(--glass-light);
-    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
     padding: 4px 10px;
 }
 .sim-label {
     font-size: 8.5px;
-    color: var(--text3);
+    color: rgba(176, 196, 222, 0.8);
     font-weight: 800;
     letter-spacing: 0.8px;
     font-family: var(--mono);
@@ -1657,7 +1654,7 @@ html, body {
 .sim-speed-btn {
     background: none;
     border: none;
-    color: var(--text3);
+    color: rgba(176, 196, 222, 0.7);
     font-size: 11px;
     font-weight: 700;
     cursor: pointer;
@@ -1669,7 +1666,7 @@ html, body {
 .sim-speed-btn.active {
     background: var(--blue);
     color: white;
-    box-shadow: 0 2px 8px rgba(0, 180, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(26, 115, 232, 0.4);
 }
 
 /* ============================================================ */
