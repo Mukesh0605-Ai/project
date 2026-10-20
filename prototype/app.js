@@ -981,16 +981,20 @@ function renderRouteCards(routes) {
     const list = $('route-list');
     if (!list) return;
     list.innerHTML = routes.map((r, i) => `
-        <div class="route-card ${i === 0 ? 'selected' : ''}" data-idx="${i}" style="background: rgba(255,255,255,0.06); border-radius: 12px; padding: 10px; margin-bottom: 8px; cursor: pointer;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <span style="font-weight: 700; font-size: 14px; color: white;">${r.name}</span>
-                <span class="route-tag ${r.tagClass}" style="font-size: 10px; padding: 2px 6px; border-radius: 6px; background: rgba(52,199,89,0.2); color: #34C759;">${r.tag}</span>
+        <div class="route-card ${i === 0 ? 'selected' : ''}" data-idx="${i}">
+            <div class="route-card-header">
+                <span class="route-name">${r.name}</span>
+                <span class="route-tag ${r.tagClass || 'tag-green'}">${r.tag}</span>
             </div>
-            <div style="display: flex; gap: 14px; font-size: 12px; color: var(--text2);">
+            <div class="route-card-info">
                 <span>📏 ${fmtDist(r.distanceM)}</span>
                 <span>⏱ ${fmtTime(r.durationS)}</span>
                 <span>⚡ ${Math.round(r.avgSpeedKmh || 40)} km/h</span>
             </div>
+            ${r.outageZones && r.outageZones.length ? `
+                <div class="route-outage-warning">
+                    ⚠️ ${r.outageZones.length} GNSS Blackout Zone(s) Detected
+                </div>` : ''}
         </div>`
     ).join('');
 
